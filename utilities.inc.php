@@ -670,6 +670,15 @@ function runsql($sql, $m) {
 
 // -------------------------------------------------------------
 
+function runsqlquiet($sql, $m) {
+	global $thedb;
+	$num = $thedb->exec_sql($sql,array(),FALSE);		
+	$message = (($m == '') ? $num : ($m . ": " . $num));
+	return $message;
+}
+
+// -------------------------------------------------------------
+
 function optimizedb() {
 	adjust_autoincr('archivedtexts','AtID');
 	adjust_autoincr('languages','LgID');
@@ -2393,14 +2402,13 @@ function refreshText($word,$tid) {
 // -------------------------------------------------------------
 
 function check_update_db() {
-	global $debug;
+	global $debug, $thedb;
 	$tables = array();
 	
-	$res = mysql_query("SHOW TABLES");
-	if ($res == FALSE) die("SHOW TABLES error");
-  while ($row = mysql_fetch_row($res)) 
-  	$tables[] = $row[0];
-	mysql_free_result($res);
+	$sql = "SHOW TABLES";
+	$res = $thedb->exec_query_num_array($sql);
+	foreach ($res as $record) $tables[] = $record[0];
+	unset($res);
 	
 	$count = 0;  // counter for cache rebuild
 	
@@ -2472,9 +2480,8 @@ function check_update_db() {
 		// Rebuild Text Cache if cache tables new
 		if ($debug) echo '<p>DEBUG: rebuilding cache tables</p>';
 		$sql = "select TxID, TxLgID from texts";
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid Query: $sql");
-		while ($record = mysql_fetch_assoc($res)) {
+		$res = $thedb->exec_query($sql);		
+		foreach ($res as $record) {
 			$id = $record['TxID'];
 			runsql('delete from sentences where SeTxID = ' . $id, "");
 			runsql('delete from textitems where TiTxID = ' . $id, "");
@@ -2483,47 +2490,49 @@ function check_update_db() {
 			splitText(
 				get_first_value('select TxText as value from texts where TxID = ' . $id), $record['TxLgID'], $id );
 		}
-		mysql_free_result($res);
+		unset($res);
 	}
 	
 	// Version
 	
-	$res = mysql_query("select StValue as value from settings where StKey = 'dbversion'");
-	if (mysql_errno() != 0) die('There is something wrong with your database ' . $dbname . '. Please reinstall.');
-	$record = mysql_fetch_assoc($res);	
-	if ($record) {
-		$dbversion = $record["value"];
-	} else {
+	$sql = "SHOW TABLES LIKE 'settings'";
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record === FALSE) die('There is something wrong with your database ' . $dbname . '. Please reinstall.');
+	unset($record);
+
+	$sql = "select StValue as value from settings where StKey = 'dbversion'";
+	$dbversion = $thedb->exec_query_value($sql);	
+	if (! isset($dbversion)) {
 		$dbversion = 'v001000000';
 		saveSetting('dbversion',$dbversion);
 		if ($debug) echo '<p>DEBUG: DB version not found, set to: ' . $dbversion . '</p>';
 	}
-	mysql_free_result($res);
 	
 	// Do DB Updates
 	
 	$currversion = get_version_number();
 	if ( $currversion > $dbversion ) {
-		if ($currversion > 'v001000000') {
+		if ($debug) echo '<p>DEBUG: Current version ' . $currversion . ' &gt; db version ' . $dbversion . '</p>';
+		if ($dbversion <= 'v001000000') {
 			// updates for all versions > 1.0.0 
 			if ($debug) echo '<p>DEBUG: Doing db-upgrade ' . $currversion . ' &gt; v001000000</p>';
-			runsql("ALTER TABLE words ADD WoTodayScore DOUBLE NOT NULL DEFAULT 0, ADD WoTomorrowScore DOUBLE NOT NULL DEFAULT 0, ADD WoRandom DOUBLE NOT NULL DEFAULT 0",'');
-			runsql("ALTER TABLE words ADD INDEX WoTodayScore (WoTodayScore), ADD INDEX WoTomorrowScore (WoTomorrowScore), ADD INDEX WoRandom (WoRandom)",'');
-			runsql("UPDATE words SET " . make_score_random_insert_update('u'),'');
+			runsqlquiet("ALTER TABLE words ADD WoTodayScore DOUBLE NOT NULL DEFAULT 0, ADD WoTomorrowScore DOUBLE NOT NULL DEFAULT 0, ADD WoRandom DOUBLE NOT NULL DEFAULT 0","");
+			runsqlquiet("ALTER TABLE words ADD INDEX WoTodayScore (WoTodayScore), ADD INDEX WoTomorrowScore (WoTomorrowScore), ADD INDEX WoRandom (WoRandom)","");
+			runsqlquiet("UPDATE words SET " . make_score_random_insert_update('u'),"");
 		}
-		if ($currversion > 'v001001001') {
+		if ($dbversion <= 'v001001001') {
 			if ($debug) echo '<p>DEBUG: Doing db-upgrade ' . $currversion . ' &gt; v001001001</p>';
 			// updates for all versions > 1.1.1 : 
 			// New: Table "tags", created above
 			// New: Table "wordtags", created above
 		}
-		if ($currversion > 'v001002002') {
+		if ($dbversion <= 'v001002002') {
 			if ($debug) echo '<p>DEBUG: Doing db-upgrade ' . $currversion . ' &gt; v001002002</p>';
 			// updates for all versions > 1.2.2 :
 			// New: Table "tags2", created above
 			// New: Table "texttags", created above
 			// New: Table "archtexttags", created above
-			runsql("ALTER TABLE languages ADD LgRightToLeft INT(1) UNSIGNED NOT NULL DEFAULT  0",'');
+			runsqlquiet("ALTER TABLE languages ADD LgRightToLeft INT(1) UNSIGNED NOT NULL DEFAULT 0","");
 		}
 		// set to current.
 		saveSetting('dbversion',$currversion);

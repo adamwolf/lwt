@@ -98,6 +98,23 @@ class DB {
 		
 	}
 
+	public function exec_query_num_array($sql, $params=array()) {
+		
+		try {
+			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+			$stmt->setFetchMode(PDO::FETCH_NUM);
+			$stmt->execute($params);
+			$result = $stmt->fetchAll();
+			$stmt->closeCursor();
+			unset($this->lastInsertId);
+			return $result;   // array of num. arrays, empty if no records found
+		}
+		catch(PDOException $e) {
+			die("Query failed: " . $e->getMessage() . " [" . $sql . "]");
+		}
+		
+	}
+
 	public function exec_query_onlyfirst($sql, $params=array()) {
 		
 		try {
@@ -136,7 +153,7 @@ class DB {
 		
 	}
 
-	public function exec_sql($sql, $params=array()) {
+	public function exec_sql($sql, $params=array(), $errdie=TRUE) {
 		
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
@@ -147,7 +164,7 @@ class DB {
 			return $count;    // number of recs affected
 		}
 		catch(PDOException $e) {
-			die("Exec SQL failed: " . $e->getMessage() . " [" . $sql . "]");
+			if ($errdie) die("Exec SQL failed: " . $e->getMessage() . " [" . $sql . "]");
 		}
 		
 	}
