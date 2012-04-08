@@ -179,7 +179,7 @@ if ($count <= 0) {
 		// echo $cleansent;
 		
 		echo '<p ' . ($rtlScript ? 'dir="rtl"' : '') . ' style="' . ($removeSpaces ? 'word-break:break-all;' : '') . 'font-size:' . $textsize . '%;line-height: 1.4; text-align:center; margin-bottom:300px;">';
-		$l = mb_strlen($sent,'utf-8');
+		$l = mb_strlen($sent,'UTF-8');
 		$r = '';
 		$save = '';
 		$on = 0;

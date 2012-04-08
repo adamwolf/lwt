@@ -20,26 +20,26 @@ include "settings.inc.php";
 include "utilities.inc.php";
 
 $sql = 'select TxLgID, TxTitle from texts where TxID = ' . $_REQUEST['text'];
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-$record = mysql_fetch_assoc($res);
-$title = $record['TxTitle'];
-$langid = $record['TxLgID'];
-mysql_free_result($res);
+$record = $thedb->exec_query_onlyfirst($sql);
+if ($record !== FALSE) {
+	$title = $record['TxTitle'];
+	$langid = $record['TxLgID'];
+} else die("Text not found");
+unset($record);
 
 pagestart_nobody(tohtml($title));
 
 $sql = 'select LgName, LgDict1URI, LgDict2URI, LgGoogleTranslateURI, LgTextSize, LgRemoveSpaces, LgRightToLeft from languages where LgID = ' . $langid;
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-$record = mysql_fetch_assoc($res);
-$wb1 = isset($record['LgDict1URI']) ? $record['LgDict1URI'] : "";
-$wb2 = isset($record['LgDict2URI']) ? $record['LgDict2URI'] : "";
-$wb3 = isset($record['LgGoogleTranslateURI']) ? $record['LgGoogleTranslateURI'] : "";
-$textsize = $record['LgTextSize'];
-$removeSpaces = $record['LgRemoveSpaces'];
-$rtlScript = $record['LgRightToLeft'];
-mysql_free_result($res);
+$record = $thedb->exec_query_onlyfirst($sql);
+if ($record !== FALSE) {
+	$wb1 = isset($record['LgDict1URI']) ? $record['LgDict1URI'] : "";
+	$wb2 = isset($record['LgDict2URI']) ? $record['LgDict2URI'] : "";
+	$wb3 = isset($record['LgGoogleTranslateURI']) ? $record['LgGoogleTranslateURI'] : "";
+	$textsize = $record['LgTextSize'];
+	$removeSpaces = $record['LgRemoveSpaces'];
+	$rtlScript = $record['LgRightToLeft'];
+} else die("Text not found");
+unset($record);
 
 $showAll = getSetting('showallwords');
 $showAll = ($showAll == '' ? 1 : (((int) $showAll != 0) ? 1 : 0));
@@ -73,16 +73,14 @@ echo '<div id="thetext" ' .  ($rtlScript ? 'dir="rtl"' : '') . '><p style="' . (
 
 $currcharcount = 0;
 
-$sql = 'select TiWordCount as Code, TiText, TiTextLC, TiOrder, TiIsNotWord, CHAR_LENGTH(TiText) AS TiTextLength, WoID, WoText, WoTextLC, WoStatus, WoTranslation, WoRomanization from (textitems left join words on (TiTextLC = WoTextLC) and (TiLgID = WoLgID)) where TiTxID = ' . $_REQUEST['text'] . ' order by TiOrder asc, TiWordCount desc';
+$sql = 'select TiWordCount as Code, TiText, TiTextLC, TiOrder, TiIsNotWord, WoID, WoText, WoTextLC, WoStatus, WoTranslation, WoRomanization from (textitems left join words on (TiTextLC = WoTextLC) and (TiLgID = WoLgID)) where TiTxID = ' . $_REQUEST['text'] . ' order by TiOrder asc, TiWordCount desc';
 
 $titext = array('','','','','','','','','','','');
 $hideuntil = -1;
 $hidetag = '';
 
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-
-while ($record = mysql_fetch_assoc($res)) {  // MAIN LOOP
+$res = $thedb->exec_query($sql);
+foreach ($res as $record) {  // MAIN LOOP
 
 	$actcode = $record['Code'] + 0;
 	$spanid = 'ID-' . $record['TiOrder'] . '-' . $actcode;
@@ -161,11 +159,11 @@ while ($record = mysql_fetch_assoc($res)) {  // MAIN LOOP
 		
 	} // $record['TiIsNotWord'] == 0  -- A TERM
 	
-	if ($actcode == 1) $currcharcount += $record['TiTextLength']; 
+	if ($actcode == 1) $currcharcount += mb_strlen($record['TiText'], 'UTF-8'); 
 	
 } // while ($record = mysql_fetch_assoc($res))  -- MAIN LOOP
 
-mysql_free_result($res);
+unset($res);
 echo '<span id="totalcharcount" class="hide">' . $currcharcount . '</span></p><p style="font-size:' . $textsize . '%;line-height: 1.4; margin-bottom: 300px;">&nbsp;</p></div>';
 
 pageend();

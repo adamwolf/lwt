@@ -143,9 +143,8 @@ if (isset($_REQUEST['new'])) {
 elseif (isset($_REQUEST['chg'])) {
 	
 	$sql = 'select * from tags where TgID = ' . $_REQUEST['chg'];
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	if ($record = mysql_fetch_assoc($res)) {
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record !== FALSE) {
 ?>
 		<h4>Edit Tag</h4>
 		<form name="edittag" class="validate" action="<?php echo $_SERVER['PHP_SELF']; ?>#rec<?php echo $_REQUEST['chg']; ?>" method="post">
@@ -167,8 +166,8 @@ elseif (isset($_REQUEST['chg'])) {
 		</table>
 		</form>
 <?php
-	}
-	mysql_free_result($res);
+	} else die("Tag for Update not found");
+	unset($record);
 }
 
 // DISPLAY
@@ -189,7 +188,7 @@ else {
 	
 	if ($currentpage < 1) $currentpage = 1;
 	if ($currentpage > $pages) $currentpage = $pages;
-	$limit = 'LIMIT ' . (($currentpage-1) * $maxperpage) . ',' . $maxperpage;
+	$limit = 'LIMIT ' . $maxperpage . ' OFFSET ' . (($currentpage-1) * $maxperpage);
 
 	$sorts = array('TgText','TgComment','TgID desc');
 	$lsorts = count($sorts);
@@ -265,9 +264,8 @@ Multi Actions <img src="icn/lightning.png" title="Multi Actions" alt="Multi Acti
 
 $sql = 'select TgID, TgText, TgComment from tags where (1=1) ' . $wh_query . ' order by ' . $sorts[$currentsort-1] . ' ' . $limit;
 if ($debug) echo $sql;
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-while ($record = mysql_fetch_assoc($res)) {
+$res = $thedb->exec_query($sql);
+foreach ($res as $record) {
 	$c = get_first_value('select count(*) as value from wordtags where WtTgID=' . $record['TgID']);
 	echo '<tr>';
 	echo '<td class="td1 center"><a name="rec' . $record['TgID'] . '"><input name="marked[]" type="checkbox" class="markcheck" value="' . $record['TgID'] . '" ' . checkTest($record['TgID'], 'marked') . ' /></a></td>';
@@ -277,7 +275,7 @@ while ($record = mysql_fetch_assoc($res)) {
 	echo '<td class="td1 center">' . ($c > 0 ? '<a href="edit_words.php?page=1&amp;query=&amp;text=&amp;status=&amp;filterlang=&amp;status=&amp;tag12=0&amp;tag2=&amp;tag1=' . $record['TgID'] . '">' . $c . '</a>' : '0' ) . '</td>';
 	echo '</tr>';
 }
-mysql_free_result($res);
+unset($res);
 
 ?>
 </table>

@@ -99,11 +99,14 @@ if (! areCookiesEnabled()) document.write('<p class="red">*** Cookies are not en
 flush();
 optimizedb();
 
-$mb = get_first_value("SELECT round(sum(data_length+index_length)/1024/1024,1) as value FROM information_schema.TABLES where table_schema = " . convert_string_to_sqlsyntax($dbname) . " GROUP BY table_schema");
+if($thedb->is_mysql())
+	$mb = get_first_value("SELECT round(sum(data_length+index_length)/1024/1024,1) as value FROM information_schema.TABLES where table_schema = " . convert_string_to_sqlsyntax($dbname) . " GROUP BY table_schema");
+else
+	$mb = round(filesize($dbname)/1e6,2);
 
 ?>
 
-This is <b>LWT <?php echo get_version(); ?></b> / Database: <b><?php echo $dbname; ?></b> on <b><?php echo $server; ?></b> / DB-Size: <b><?php echo $mb; ?> MB</b></p></td></tr></table>
+This is <b>LWT <?php echo get_version(); ?></b> / Database: <b><?php echo $dbname; ?></b> on <b><?php echo ($server==""?"File System":$server); ?></b> / DB-Size: <b><?php echo $mb; ?> MB</b></p></td></tr></table>
 
 <?php
 

@@ -24,11 +24,11 @@ $langid = get_first_value("select TxLgID as value from texts where TxID = " . $_
 pagestart("Setting all blue words to Well-known",false);
 
 $sql = 'select distinct TiText, TiTextLC from (textitems left join words on (TiTextLC = WoTextLC) and (TiLgID = WoLgID)) where TiIsNotWord = 0 and WoID is null and TiWordCount = 1 and TiTxID = ' . $_REQUEST['text'] . ' order by TiOrder';
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
+$res = $thedb->exec_query($sql);
 $count = 0;
 $javascript = "var title='';";
-while ($record = mysql_fetch_assoc($res)) {
+$thedb->begin_transaction();
+foreach ($res as $record) {
 	$term = $record['TiText'];	
 	$termlc = $record['TiTextLC'];	
 	$count1 = 0 + runsql('insert into words (WoLgID, WoText, WoTextLC, WoStatus, WoStatusChanged,' .  make_score_random_insert_update('iv') . ') values( ' . 
@@ -42,7 +42,8 @@ make_score_random_insert_update('id') . ')','');
 		$javascript .= "$('.TERM" . strToClassName($termlc) . "', context).removeClass('status0').addClass('status99 word" . $wid . "').attr('data_status','99').attr('data_wid','" . $wid . "').attr('title',title);";
 	$count += $count1;
 }
-mysql_free_result($res);
+$thedb->commit_transaction();
+unset($res);
 
 echo "<p>OK, you know all " . $count . " word(s) well!</p>";
 

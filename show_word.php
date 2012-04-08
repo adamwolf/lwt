@@ -25,10 +25,9 @@ $wid = getreq('wid');
 
 if ($wid == '') die ('Word not found');
 
-$sql = 'select WoLgID, WoText, WoTranslation, WoSentence, WoRomanization, WoStatus from words where WoID = ' . $wid;
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-if ($record = mysql_fetch_assoc($res)) {
+$sql = 'select WoLgID, WoText, WoTranslation, WoSentence, WoRomanization, WoStatus from words where WoID = ?';
+$record = $thedb->exec_query_onlyfirst($sql,array($wid));
+if ($record !== FALSE) {
 
 	$transl = repl_tab_nl($record['WoTranslation']);
 	if($transl == '*') $transl='';
@@ -82,7 +81,7 @@ window.parent.frames['l'].setTimeout('cClick()', 100);
 <?php
 }
 
-mysql_free_result($res);
+unset($record);
 
 pageend();
 

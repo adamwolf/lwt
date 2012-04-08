@@ -27,6 +27,8 @@ $message = '';
 if (isset($_REQUEST['op'])) {
 
 	if ($_REQUEST['op'] == 'Save') {
+	
+		$thedb->begin_transaction();
 
 		saveSetting('set-text-h-frameheight-no-audio',
 		$_REQUEST['set-text-h-frameheight-no-audio']);
@@ -81,12 +83,14 @@ if (isset($_REQUEST['op'])) {
 	
 		saveSetting('set-text-visit-statuses-via-key',
 		$_REQUEST['set-text-visit-statuses-via-key']);
+		
+		$thedb->commit_transaction();
 	
 		$message = 'Settings saved';
 	
 	} else {
 	
-		$dummy = runsql("delete from settings where StKey like 'set-%'",''); 
+		$dummy = $thedb->exec_sql("delete from settings where StKey like 'set-%'"); 
 	
 		$message = 'All Settings reset to default values';
 	

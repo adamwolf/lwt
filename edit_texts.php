@@ -422,7 +422,7 @@ else {
 	
 	if ($currentpage < 1) $currentpage = 1;
 	if ($currentpage > $pages) $currentpage = $pages;
-	$limit = 'LIMIT ' . (($currentpage-1) * $maxperpage) . ',' . $maxperpage;
+	$limit = 'LIMIT ' . $maxperpage . ' OFFSET ' . (($currentpage-1) * $maxperpage);
 
 	$sorts = array('TxTitle','TxID desc');
 	$lsorts = count($sorts);

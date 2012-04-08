@@ -174,9 +174,8 @@ if (isset($_REQUEST['allaction'])) {
 			$sql = 'select distinct WoID from (words left JOIN wordtags ON WoID = WtWoID), textitems where TiLgID = WoLgID and TiTextLC = WoTextLC and TiTxID = ' . $currenttext . $wh_lang . $wh_stat . $wh_query . ' group by WoID ' . $wh_tag;
 		}
 		$cnt=0;
-		$res = mysql_query($sql);
-		if ($res == FALSE) die("Invalid Query: $sql");
-		while ($record = mysql_fetch_assoc($res)) {
+		$res = $thedb->exec_query($sql);
+		foreach ($res as $record) {
 			$id = $record['WoID'];
 			$message='0';
 			if ($allaction == 'delall' ) {
@@ -222,7 +221,7 @@ if (isset($_REQUEST['allaction'])) {
 			}
 			$cnt += (int)$message;
 		}
-		mysql_free_result($res);
+		unset($res);
 		if ($allaction == 'deltagall') {
 			header("Location: edit_words.php");
 			exit();
@@ -262,15 +261,14 @@ if (isset($_REQUEST['allaction'])) {
 		}
 		$cnt = 0;
 		$list = '(';
-		$res = mysql_query($sql);
-		if ($res == FALSE) die("Invalid Query: $sql");
-		while ($record = mysql_fetch_assoc($res)) {
+		$res = $thedb->exec_query($sql);
+		foreach ($res as $record) {
 			$cnt++;
 			$id = $record['WoID'];
 			$list .= ($cnt==1 ? '' : ',') . $id;
 		}	
 		$list .= ")";
-		mysql_free_result($res);
+		unset($res);
 		$_SESSION['testsql'] = ' words where WoID in ' . $list . ' ';
 		header("Location: do_test.php?selection=1");
 		exit();
@@ -396,9 +394,8 @@ if (isset($_REQUEST['new']) && isset($_REQUEST['lang'])) {
 elseif (isset($_REQUEST['chg'])) {
 	
 	$sql = 'select * from words, languages where LgID = WoLgID and WoID = ' . $_REQUEST['chg'];
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	if ($record = mysql_fetch_assoc($res)) {
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record !== FALSE) {
 		
 		$wordlc = $record['WoTextLC'];
 		$transl = repl_tab_nl($record['WoTranslation']);
@@ -456,8 +453,8 @@ elseif (isset($_REQUEST['chg'])) {
 		</form>
 		<div id="exsent"><span class="click" onclick="do_ajax_show_sentences(<?php echo $record['LgID']; ?>, <?php echo prepare_textdata_js($wordlc) . ', ' . prepare_textdata_js("document.forms['editword'].WoSentence"); ?>);"><img src="icn/sticky-notes-stack.png" title="Show Sentences" alt="Show Sentences" /> Show Sentences</span></div>	
 <?php
-	}
-	mysql_free_result($res);
+	} else die("Term for Edit not found");
+	unset($record);
 }
 
 // DISPLAY
@@ -480,7 +477,7 @@ else {
 	
 	if ($currentpage < 1) $currentpage = 1;
 	if ($currentpage > $pages) $currentpage = $pages;
-	$limit = 'LIMIT ' . (($currentpage-1) * $maxperpage) . ',' . $maxperpage;
+	$limit = 'LIMIT ' . $maxperpage . ' OFFSET ' . (($currentpage-1) * $maxperpage);
 
 	$sorts = array('WoTextLC','lower(WoTranslation)','WoID desc','WoStatus, WoTextLC','WoTodayScore');
 	$lsorts = count($sorts);
@@ -600,9 +597,8 @@ if ($currenttext == '') {
 }
 if ($debug) echo $sql;
 flush();
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-while ($record = mysql_fetch_assoc($res)) {
+$res = $thedb->exec_query($sql);
+foreach ($res as $record) {
 	$days = $record['Days'];
 	if ( $record['WoStatus'] > 5 ) $days="-";
 	$score = $record['Score'];
@@ -619,7 +615,7 @@ while ($record = mysql_fetch_assoc($res)) {
 	echo '<td class="td1 center" nowrap="nowrap">' . $score . '</td>';
 	echo '</tr>';
 }
-mysql_free_result($res);
+unset($res);
 
 ?>
 </table>

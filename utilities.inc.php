@@ -19,7 +19,7 @@ Plus (at end): Database Connect, .. Select, .. Update
 
 function get_version() {
 	global $debug;
-	return '1.4.7 (April 6 2012)'  . 
+	return '1.5.0 (??? ?? 2012)'  . 
 	($debug ? ' <span class="red">DEBUG</span>' : '');
 }
 
@@ -48,6 +48,7 @@ function stripTheSlashesIfNeeded($s) {
 // -------------------------------------------------------------
 
 function get_tags($refresh = 0) {
+	global $thedb;
 	if (isset($_SESSION['TAGS'])) {
 		if (is_array($_SESSION['TAGS'])) {
 			if ($refresh == 0) return $_SESSION['TAGS'];
@@ -55,12 +56,11 @@ function get_tags($refresh = 0) {
 	}
 	$tags = array();
 	$sql = 'select TgText from tags order by TgText';
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
-	while ($record = mysql_fetch_assoc($res)) {
+	$res = $thedb->exec_query($sql);
+	foreach ($res as $record) {
 		$tags[] = $record["TgText"];
 	}
-	mysql_free_result($res);
+	unset($res);
 	$_SESSION['TAGS'] = $tags;
 	return $_SESSION['TAGS'];
 }
@@ -68,6 +68,7 @@ function get_tags($refresh = 0) {
 // -------------------------------------------------------------
 
 function get_texttags($refresh = 0) {
+	global $thedb;
 	if (isset($_SESSION['TEXTTAGS'])) {
 		if (is_array($_SESSION['TEXTTAGS'])) {
 			if ($refresh == 0) return $_SESSION['TEXTTAGS'];
@@ -75,12 +76,11 @@ function get_texttags($refresh = 0) {
 	}
 	$tags = array();
 	$sql = 'select T2Text from tags2 order by T2Text';
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
-	while ($record = mysql_fetch_assoc($res)) {
+	$res = $thedb->exec_query($sql);
+	foreach ($res as $record) {
 		$tags[] = $record["T2Text"];
 	}
-	mysql_free_result($res);
+	unset($res);
 	$_SESSION['TEXTTAGS'] = $tags;
 	return $_SESSION['TEXTTAGS'];
 }
@@ -88,6 +88,7 @@ function get_texttags($refresh = 0) {
 // -------------------------------------------------------------
 
 function get_tag_selectoptions($v,$l) {
+	global $thedb;
 	if ( ! isset($v) ) $v = '';
 	$r = "<option value=\"\"" . get_selected($v,'');
 	$r .= ">[Filter off]</option>";
@@ -95,15 +96,14 @@ function get_tag_selectoptions($v,$l) {
 		$sql = "select TgID, TgText from words, tags, wordtags where TgID = WtTgID and WtWoID = WoID group by TgID order by TgText";
 	else
 		$sql = "select TgID, TgText from words, tags, wordtags where TgID = WtTgID and WtWoID = WoID and WoLgID = " . $l . " group by TgID order by TgText";
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
+	$res = $thedb->exec_query($sql);
 	$cnt = 0;
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$d = $record["TgText"];
 		$cnt++;
 		$r .= "<option value=\"" . $record["TgID"] . "\"" . get_selected($v,$record["TgID"]) . ">" . tohtml($d) . "</option>";
 	}
-	mysql_free_result($res);
+	unset($res);
 	if ($cnt > 0) {
 		$r .= "<option disabled=\"disabled\">--------</option>";
 		$r .= "<option value=\"-1\"" . get_selected($v,-1) . ">UNTAGGED</option>";
@@ -114,6 +114,7 @@ function get_tag_selectoptions($v,$l) {
 // -------------------------------------------------------------
 
 function get_texttag_selectoptions($v,$l) {
+	global $thedb;
 	if ( ! isset($v) ) $v = '';
 	$r = "<option value=\"\"" . get_selected($v,'');
 	$r .= ">[Filter off]</option>";
@@ -121,15 +122,14 @@ function get_texttag_selectoptions($v,$l) {
 		$sql = "select T2ID, T2Text from texts, tags2, texttags where T2ID = TtT2ID and TtTxID = TxID group by T2ID order by T2Text";
 	else
 		$sql = "select T2ID, T2Text from texts, tags2, texttags where T2ID = TtT2ID and TtTxID = TxID and TxLgID = " . $l . " group by T2ID order by T2Text";
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
+	$res = $thedb->exec_query($sql);
 	$cnt = 0;
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$d = $record["T2Text"];
 		$cnt++;
 		$r .= "<option value=\"" . $record["T2ID"] . "\"" . get_selected($v,$record["T2ID"]) . ">" . tohtml($d) . "</option>";
 	}
-	mysql_free_result($res);
+	unset($res);
 	if ($cnt > 0) {
 		$r .= "<option disabled=\"disabled\">--------</option>";
 		$r .= "<option value=\"-1\"" . get_selected($v,-1) . ">UNTAGGED</option>";
@@ -140,6 +140,7 @@ function get_texttag_selectoptions($v,$l) {
 // -------------------------------------------------------------
 
 function get_archivedtexttag_selectoptions($v,$l) {
+	global $thedb;
 	if ( ! isset($v) ) $v = '';
 	$r = "<option value=\"\"" . get_selected($v,'');
 	$r .= ">[Filter off]</option>";
@@ -147,15 +148,14 @@ function get_archivedtexttag_selectoptions($v,$l) {
 		$sql = "select T2ID, T2Text from archivedtexts, tags2, archtexttags where T2ID = AgT2ID and AgAtID = AtID group by T2ID order by T2Text";
 	else
 		$sql = "select T2ID, T2Text from archivedtexts, tags2, archtexttags where T2ID = AgT2ID and AgAtID = AtID and AtLgID = " . $l . " group by T2ID order by T2Text";
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
+	$res = $thedb->exec_query($sql);
 	$cnt = 0;
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$d = $record["T2Text"];
 		$cnt++;
 		$r .= "<option value=\"" . $record["T2ID"] . "\"" . get_selected($v,$record["T2ID"]) . ">" . tohtml($d) . "</option>";
 	}
-	mysql_free_result($res);
+	unset($res);
 	if ($cnt > 0) {
 		$r .= "<option disabled=\"disabled\">--------</option>";
 		$r .= "<option value=\"-1\"" . get_selected($v,-1) . ">UNTAGGED</option>";
@@ -166,6 +166,8 @@ function get_archivedtexttag_selectoptions($v,$l) {
 // -------------------------------------------------------------
 
 function saveWordTags($wid) {
+	global $thedb;
+	$thedb->begin_transaction();
 	runsql("DELETE from wordtags WHERE WtWoID =" . $wid,'');
 	if (isset($_REQUEST['TermTags'])) {
 		if (is_array($_REQUEST['TermTags'])) {
@@ -187,11 +189,14 @@ function saveWordTags($wid) {
 			}
 		}
 	}
+	$thedb->commit_transaction();
 }
 
 // -------------------------------------------------------------
 
 function saveTextTags($tid) {
+	global $thedb;
+	$thedb->begin_transaction();
 	runsql("DELETE from texttags WHERE TtTxID =" . $tid,'');
 	if (isset($_REQUEST['TextTags'])) {
 		if (is_array($_REQUEST['TextTags'])) {
@@ -213,11 +218,14 @@ function saveTextTags($tid) {
 			}
 		}
 	}
+	$thedb->commit_transaction();
 }
 
 // -------------------------------------------------------------
 
 function saveArchivedTextTags($tid) {
+	global $thedb;
+	$thedb->begin_transaction();
 	runsql("DELETE from archtexttags WHERE AgAtID =" . $tid,'');
 	if (isset($_REQUEST['TextTags'])) {
 		if (is_array($_REQUEST['TextTags'])) {
@@ -239,20 +247,21 @@ function saveArchivedTextTags($tid) {
 			}
 		}
 	}
+	$thedb->commit_transaction();
 }
 
 // -------------------------------------------------------------
 
 function getWordTags($wid) {
+	global $thedb;
 	$r = '<ul id="termtags">';
 	if ($wid > 0) {
 		$sql = 'select TgText from wordtags, tags where TgID = WtTgID and WtWoID = ' . $wid . ' order by TgText';
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid query: $sql");
-		while ($record = mysql_fetch_assoc($res)) {
+		$res = $thedb->exec_query($sql);
+		foreach ($res as $record) {
 			$r .= '<li>' . tohtml($record["TgText"]) . '</li>';
 		}
-		mysql_free_result($res);
+		unset($res);
 	}
 	$r .= '</ul>';
 	return $r;
@@ -261,15 +270,15 @@ function getWordTags($wid) {
 // -------------------------------------------------------------
 
 function getTextTags($tid) {
+	global $thedb;
 	$r = '<ul id="texttags">';
 	if ($tid > 0) {
 		$sql = 'select T2Text from texttags, tags2 where T2ID = TtT2ID and TtTxID = ' . $tid . ' order by T2Text';
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid query: $sql");
-		while ($record = mysql_fetch_assoc($res)) {
+		$res = $thedb->exec_query($sql);
+		foreach ($res as $record) {
 			$r .= '<li>' . tohtml($record["T2Text"]) . '</li>';
 		}
-		mysql_free_result($res);
+		unset($res);
 	}
 	$r .= '</ul>';
 	return $r;
@@ -278,15 +287,15 @@ function getTextTags($tid) {
 // -------------------------------------------------------------
 
 function getArchivedTextTags($tid) {
+	global $thedb;
 	$r = '<ul id="texttags">';
 	if ($tid > 0) {
 		$sql = 'select T2Text from archtexttags, tags2 where T2ID = AgT2ID and AgAtID = ' . $tid . ' order by T2Text';
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid query: $sql");
-		while ($record = mysql_fetch_assoc($res)) {
+		$res = $thedb->exec_query($sql);
+		foreach ($res as $record) {
 			$r .= '<li>' . tohtml($record["T2Text"]) . '</li>';
 		}
-		mysql_free_result($res);
+		unset($res);
 	}
 	$r .= '</ul>';
 	return $r;
@@ -295,111 +304,123 @@ function getArchivedTextTags($tid) {
 // -------------------------------------------------------------
 
 function addtaglist ($item, $list) {
+	global $thedb;
+	$thedb->begin_transaction();
 	$tagid = get_first_value('select TgID as value from tags where TgText = ' . convert_string_to_sqlsyntax($item));
 	if (! isset($tagid)) {
 		runsql('insert into tags (TgText) values(' . convert_string_to_sqlsyntax($item) . ')', "");
 		$tagid = get_first_value('select TgID as value from tags where TgText = ' . convert_string_to_sqlsyntax($item));
 	}
 	$sql = 'select WoID from words where WoID in ' . $list;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
+	$res = $thedb->exec_query($sql);
 	$cnt = 0;
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$cnt++;
 		runsql('insert into wordtags (WtWoID, WtTgID) values(' . $record['WoID'] . ', ' . $tagid . ')', "");
 	}
-	mysql_free_result($res);
+	unset($res);
+	$thedb->commit_transaction();
 	return "Tag added in $cnt Terms";
 }
 
 // -------------------------------------------------------------
 
 function addarchtexttaglist ($item, $list) {
+	global $thedb;
+	$thedb->begin_transaction();
 	$tagid = get_first_value('select T2ID as value from tags2 where T2Text = ' . convert_string_to_sqlsyntax($item));
 	if (! isset($tagid)) {
 		runsql('insert into tags2 (T2Text) values(' . convert_string_to_sqlsyntax($item) . ')', "");
 		$tagid = get_first_value('select T2ID as value from tags2 where T2Text = ' . convert_string_to_sqlsyntax($item));
 	}
 	$sql = 'select AtID from archivedtexts where AtID in ' . $list;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
+	$res = $thedb->exec_query($sql);
 	$cnt = 0;
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$cnt++;
 		runsql('insert into archtexttags (AgAtID, AgT2ID) values(' . $record['AtID'] . ', ' . $tagid . ')', "");
 	}
-	mysql_free_result($res);
+	unset($res);
+	$thedb->commit_transaction();
 	return "Tag added in $cnt Texts";
 }
 
 // -------------------------------------------------------------
 
 function addtexttaglist ($item, $list) {
+	global $thedb;
+	$thedb->begin_transaction();
 	$tagid = get_first_value('select T2ID as value from tags2 where T2Text = ' . convert_string_to_sqlsyntax($item));
 	if (! isset($tagid)) {
 		runsql('insert into tags2 (T2Text) values(' . convert_string_to_sqlsyntax($item) . ')', "");
 		$tagid = get_first_value('select T2ID as value from tags2 where T2Text = ' . convert_string_to_sqlsyntax($item));
 	}
 	$sql = 'select TxID from texts where TxID in ' . $list;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
+	$res = $thedb->exec_query($sql);
 	$cnt = 0;
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$cnt++;
 		runsql('insert into texttags (TtTxID, TtT2ID) values(' . $record['TxID'] . ', ' . $tagid . ')', "");
 	}
-	mysql_free_result($res);
+	unset($res);
+	$thedb->commit_transaction();
 	return "Tag added in $cnt Texts";
 }
 
 // -------------------------------------------------------------
 
 function removetaglist ($item, $list) {
+	global $thedb;
+	$thedb->begin_transaction();
 	$tagid = get_first_value('select TgID as value from tags where TgText = ' . convert_string_to_sqlsyntax($item));
 	if (! isset($tagid)) return "Tag " . $item . " not found";
 	$sql = 'select WoID from words where WoID in ' . $list;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
+	$res = $thedb->exec_query($sql);
 	$cnt = 0;
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$cnt++;
 		runsql('delete from wordtags where WtWoID = ' . $record['WoID'] . ' and WtTgID = ' . $tagid, "");
 	}
-	mysql_free_result($res);
+	unset($res);
+	$thedb->commit_transaction();
 	return "Tag removed in $cnt Terms";
 }
 
 // -------------------------------------------------------------
 
 function removearchtexttaglist ($item, $list) {
+	global $thedb;
+	$thedb->begin_transaction();
 	$tagid = get_first_value('select T2ID as value from tags2 where T2Text = ' . convert_string_to_sqlsyntax($item));
 	if (! isset($tagid)) return "Tag " . $item . " not found";
 	$sql = 'select AtID from archivedtexts where AtID in ' . $list;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
+	$res = $thedb->exec_query($sql);
 	$cnt = 0;
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$cnt++;
 		runsql('delete from archtexttags where AgAtID = ' . $record['AtID'] . ' and AgT2ID = ' . $tagid, "");
 	}
-	mysql_free_result($res);
+	unset($res);
+	$thedb->commit_transaction();
 	return "Tag removed in $cnt Texts";
 }
 
 // -------------------------------------------------------------
 
 function removetexttaglist ($item, $list) {
+	global $thedb;
+	$thedb->begin_transaction();
 	$tagid = get_first_value('select T2ID as value from tags2 where T2Text = ' . convert_string_to_sqlsyntax($item));
 	if (! isset($tagid)) return "Tag " . $item . " not found";
 	$sql = 'select TxID from texts where TxID in ' . $list;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
+	$res = $thedb->exec_query($sql);
 	$cnt = 0;
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$cnt++;
 		runsql('delete from texttags where TtTxID = ' . $record['TxID'] . ' and TtT2ID = ' . $tagid, "");
 	}
-	mysql_free_result($res);
+	unset($res);
+	$thedb->commit_transaction();
 	return "Tag removed in $cnt Texts";
 }
 
@@ -641,13 +662,9 @@ function errorbutton($msg) {
 // -------------------------------------------------------------
 
 function runsql($sql, $m) {
-	$res = mysql_query($sql);		
-	if ($res == FALSE) {
-		$message = "Error: " . mysql_error();
-	} else {
-		$num = mysql_affected_rows();
-		$message = (($m == '') ? $num : ($m . ": " . $num));
-	}
+	global $thedb;
+	$num = $thedb->exec_sql($sql);		
+	$message = (($m == '') ? $num : ($m . ": " . $num));
 	return $message;
 }
 
@@ -675,10 +692,13 @@ function limitlength($s, $l) {
 // -------------------------------------------------------------
 
 function adjust_autoincr($table,$key) {
-	$val = get_first_value('select max(' . $key .')+1 as value from ' . $table);
-	if (! isset($val)) $val = 1;
-	$sql = 'alter table ' . $table . ' AUTO_INCREMENT = ' . $val;
-	$res = mysql_query($sql);		
+	global $thedb;
+	if ($thedb->is_mysql()) {
+		$val = $thedb->exec_query_value('select max(' . $key .')+1 as value from ' . $table);
+		if (! isset($val)) $val = 1;
+		$sql = 'alter table ' . $table . ' AUTO_INCREMENT = ' . $val;
+		$thedb->exec_sql($sql);
+	}
 }
 
 // -------------------------------------------------------------
@@ -735,23 +755,26 @@ if (count($_REQUEST)) { echo '$_REQUEST...'; print_r($_REQUEST); }
 // -------------------------------------------------------------
 
 function convert_string_to_sqlsyntax($data) {
+	global $thedb;
 	$result = "NULL";
 	$data = trim(prepare_textdata($data));
-	if($data != "") $result = "'" . mysql_real_escape_string($data) . "'";
+	if($data != "") $result = $thedb->quote_string($data);
 	return $result;
 }
 
 // -------------------------------------------------------------
 
 function convert_string_to_sqlsyntax_nonull($data) {
+	global $thedb;
 	$data = trim(prepare_textdata($data));
-	return  "'" . mysql_real_escape_string($data) . "'";
+	return $thedb->quote_string($data);
 }
 
 // -------------------------------------------------------------
 
 function convert_string_to_sqlsyntax_notrim_nonull($data) {
-	return "'" . mysql_real_escape_string(prepare_textdata($data)) . "'";
+	global $thedb;
+	return $thedb->quote_string(prepare_textdata($data));
 }
 
 // -------------------------------------------------------------
@@ -835,10 +858,11 @@ function get_sentence_count_selectoptions($v) {
 // -------------------------------------------------------------
 
 function saveSetting($k,$v) {
+	global $thedb;
 	$dft = get_setting_data();
 	if (! isset($v)) $v ='';
 	$v = stripTheSlashesIfNeeded($v);
-	runsql('delete from settings where StKey = ' . convert_string_to_sqlsyntax($k), '');
+	$dum = $thedb->exec_sql('delete from settings where StKey = ?', array($k));
 	if ($v !== '') {
 		if (array_key_exists($k,$dft)) {
 			if ($dft[$k]['num']) {
@@ -847,9 +871,8 @@ function saveSetting($k,$v) {
 				if ( $v > $dft[$k]['max'] ) $v = $dft[$k]['dft'];
 			}
 		}
-		$dum = runsql('insert into settings (StKey, StValue) values(' .
-			convert_string_to_sqlsyntax($k) . ', ' . 
-			convert_string_to_sqlsyntax($v) . ')', '');
+		$dum = $thedb->exec_sql('insert into settings (StKey, StValue) values(?,?)',
+			array($k,$v));
 	}
 }
 
@@ -974,21 +997,15 @@ function getWordTagList($wid, $before=' ', $brack=1, $tohtml=1) {
 // -------------------------------------------------------------
 
 function get_first_value($sql) {
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
-	$record = mysql_fetch_assoc($res);
-	if ($record) 
-		$d = $record["value"];
-	else
-		$d = NULL;
-	mysql_free_result($res);
-	return $d;
+	global $thedb;
+	return $thedb->exec_query_value($sql);
 }
 
 // -------------------------------------------------------------
 
 function get_last_key() {
-	return get_first_value('SELECT LAST_INSERT_ID() as value');		
+	global $thedb;
+	return $thedb->last_insert_id();		
 }
 
 // -------------------------------------------------------------
@@ -1010,21 +1027,21 @@ function get_selected($value,$selval) {
 // -------------------------------------------------------------
 
 function get_languages_selectoptions($v,$dt) {
+	global $thedb;
 	$sql = "select LgID, LgName from languages order by LgName";
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
+	$res = $thedb->exec_query($sql);		
 	if ( ! isset($v) || trim($v) == '' ) {
 		$r = "<option value=\"\" selected=\"selected\">" . $dt . "</option>";
 	} else {
 		$r = "<option value=\"\">" . $dt . "</option>";
 	}
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$d = $record["LgName"];
 		if ( strlen($d) > 30 ) $d = substr($d,0,30) . "...";
 		$r .= "<option value=\"" . $record["LgID"] . "\" " . get_selected($v,$record["LgID"]);
 		$r .= ">" . tohtml($d) . "</option>";
 	}
-	mysql_free_result($res);
+	unset($res);
 	return $r;
 }
 
@@ -1342,6 +1359,7 @@ function get_multiplearchivedtextactions_selectoptions() {
 // -------------------------------------------------------------
 
 function get_texts_selectoptions($lang,$v) {
+	global $thedb;
 	if ( ! isset($v) ) $v = '';
 	if ( ! isset($lang) ) $lang = '';	
 	if ( $lang=="" ) 
@@ -1351,14 +1369,13 @@ function get_texts_selectoptions($lang,$v) {
 	$r = "<option value=\"\"" . get_selected($v,'');
 	$r .= ">[Filter off]</option>";
 	$sql = "select TxID, TxTitle, LgName from languages, texts where LgID = TxLgID " . $l . " order by LgName, TxTitle";
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
-	while ($record = mysql_fetch_assoc($res)) {
+	$res = $thedb->exec_query($sql);
+	foreach ($res as $record) {
 		$d = $record["TxTitle"];
 		if ( mb_strlen($d, 'UTF-8') > 30 ) $d = mb_substr($d,0,30, 'UTF-8') . "...";
 		$r .= "<option value=\"" . $record["TxID"] . "\"" . get_selected($v,$record["TxID"]) . ">" . tohtml( ($lang!="" ? "" : ($record["LgName"] . ": ")) . $d) . "</option>";
 	}
-	mysql_free_result($res);
+	unset($res);
 	return $r;
 }
 
@@ -2538,18 +2555,11 @@ function check_update_db() {
 
 if ($dspltime) get_execution_time();
 
-// Connection, @ suppresses messages from function
+// DB Connection
 
-$err = @mysql_connect($server,$userid,$passwd); 
-if ($err == FALSE) die('DB connect error (MySQL not running or connection parameters are wrong; start MySQL and/or correct file "connect.inc.php"). Please read the documentation: http://lwt.sf.net');
+require_once("db.inc.php");
 
-@mysql_query("SET NAMES 'utf8'");
-
-$err = @mysql_select_db($dbname);
-if ($err == FALSE && mysql_errno() == 1049) runsql("CREATE DATABASE `" . $dbname . "` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci",'');
-
-$err = @mysql_select_db($dbname);
-if ($err == FALSE) die('DB select error (Cannot find database: "'. $dbname . '" or connection parameter $dbname is wrong; please create database and/or correct file: "connect.inc.php"). Hint: The database can be created by importing the file "dbinstall.sql" within phpMyAdmin. Please read the documentation: http://lwt.sf.net');   
+$thedb = new DB ($dbname, $server, $userid, $passwd);
 
 // check/update db
 check_update_db();

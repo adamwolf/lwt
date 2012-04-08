@@ -20,18 +20,17 @@ include "settings.inc.php";
 include "utilities.inc.php";
 
 $textid = getreq('text');
+
 $sql = 'select TxLgID, TxTitle, TxAudioURI from texts where TxID = ' . $textid;
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-$record = mysql_fetch_assoc($res);
-
-$audio = $record['TxAudioURI'];
-if(!isset($audio)) $audio='';
-$audio=trim($audio);
-
-$title = $record['TxTitle'];
-$langid = $record['TxLgID'];
-mysql_free_result($res); 
+$record = $thedb->exec_query_onlyfirst($sql);
+if ($record !== FALSE) {
+	$audio = $record['TxAudioURI'];
+	if(!isset($audio)) $audio='';
+	$audio=trim($audio);
+	$title = $record['TxTitle'];
+	$langid = $record['TxLgID'];
+} else die("Text not found");
+unset($record); 
 
 saveSetting('currenttext',$textid);
 
