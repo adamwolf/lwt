@@ -145,16 +145,14 @@ else {  // if (! isset($_REQUEST['op']))
 	
 	if ($wid == '') {	
 		$sql = 'select TiText, TiLgID from textitems where TiTxID = ' . $_REQUEST['tid'] . ' and TiWordCount = 1 and TiOrder = ' . $_REQUEST['ord'];
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid Query: $sql");
-		$record = mysql_fetch_assoc($res);
-		if ($record) {
+		$record = $thedb->exec_query_onlyfirst($sql);		
+		if ($record !== FALSE) {
 			$term = $record['TiText'];
 			$lang = $record['TiLgID'];
 		} else {
 			die("Error: No results");
 		}
-		mysql_free_result($res);
+		unset($record);
 		
 		$termlc =	mb_strtolower($term, 'UTF-8');
 		
@@ -163,17 +161,15 @@ else {  // if (! isset($_REQUEST['op']))
 	} else {
 
 		$sql = 'select WoText, WoLgID from words where WoID = ' . $wid;
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid Query: $sql");
-		$record = mysql_fetch_assoc($res);
-		if ( $record ) {
+		$record = $thedb->exec_query_onlyfirst($sql);		
+		if ($record !== FALSE) {
 			$term = $record['WoText'];
 			$lang = $record['WoLgID'];
 		} else {
 			die("Error: No results");
 		}
-		mysql_free_result($res);
-		$termlc =	mb_strtolower($term, 'UTF-8');
+		unset($record);
+		$termlc = mb_strtolower($term, 'UTF-8');
 		
 	}
 	
@@ -244,9 +240,10 @@ else {  // if (! isset($_REQUEST['op']))
 	else {
 		
 		$sql = 'select WoTranslation, WoSentence, WoRomanization, WoStatus from words where WoID = ' . $wid;
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid Query: $sql");
-		if ($record = mysql_fetch_assoc($res)) {
+		$record = $thedb->exec_query_onlyfirst($sql);
+		if ($record === FALSE) {
+			die ("Word not found");
+		} else {
 			
 			$status = $record['WoStatus'];
 			if ($status >= 98) $status = 1;
@@ -307,7 +304,7 @@ else {  // if (! isset($_REQUEST['op']))
 			<div id="exsent"><span class="click" onclick="do_ajax_show_sentences(<?php echo $lang; ?>, <?php echo prepare_textdata_js($termlc) . ', ' . prepare_textdata_js("document.forms['editword'].WoSentence"); ?>);"><img src="icn/sticky-notes-stack.png" title="Show Sentences" alt="Show Sentences" /> Show Sentences</span></div>	
 			<?php
 		}
-		mysql_free_result($res);
+		unset($record);
 	}
 
 }
