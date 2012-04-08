@@ -169,6 +169,18 @@ class DB {
 		
 	}
 
+	public function exec_sql_simple($sql) {
+		
+		try {
+			$this->dbh->exec($params);
+			return 0;   
+		}
+		catch(PDOException $e) {
+			return 1;
+		}
+		
+	}
+
 	public function begin_transaction() {
 		
 		try {
