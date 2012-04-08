@@ -1684,11 +1684,11 @@ function strToClassName($string)
 // -------------------------------------------------------------
 
 function anki_export($sql) {
+	global $thedb;
 	// WoID, LgRightToLeft, LgRegexpWordCharacters, LgName, WoText, WoTranslation, WoRomanization, WoSentence, taglist
-	$res = mysql_query($sql);
 	$x = '';		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	while ($record = mysql_fetch_assoc($res)) {
+	$res = $thedb->exec_query($sql);
+	foreach ($res as $record) {
 		$rtlScript = $record['LgRightToLeft'];
 		$span1 = ($rtlScript ? '<span dir="rtl">' : '');
 		$span2 = ($rtlScript ? '</span>' : '');
@@ -1709,7 +1709,7 @@ function anki_export($sql) {
 		tohtml($record["taglist"]) .  
 		"\r\n";
 	}
-	mysql_free_result($res);
+	unset($res);
 	header('Content-type: text/plain; charset=utf-8');
 	header("Content-disposition: attachment; filename=lwt_anki_export.txt");
 	echo $x;
@@ -1720,10 +1720,10 @@ function anki_export($sql) {
 
 function tsv_export($sql) {
 	// WoID, LgName, WoText, WoTranslation, WoRomanization, WoSentence, WoStatus, taglist
-	$res = mysql_query($sql);
+	global $thedb;
 	$x = '';		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	while ($record = mysql_fetch_assoc($res)) {
+	$res = $thedb->exec_query($sql);
+	foreach ($res as $record) {
 		$x .= repl_tab_nl($record["WoText"]) . "\t" . 
 		repl_tab_nl($record["WoTranslation"]) . "\t" . 
 		repl_tab_nl($record["WoSentence"]) . "\t" . 
@@ -1733,7 +1733,7 @@ function tsv_export($sql) {
 		$record["WoID"] . "\t" . 
 		$record["taglist"] . "\r\n";
 	}
-	mysql_free_result($res);
+	unset($res);
 	header('Content-type: text/plain; charset=utf-8');
 	header("Content-disposition: attachment; filename=lwt_tsv_export.txt");
 	echo $x;
@@ -1812,6 +1812,7 @@ function texttodocount2($text) {
 // -------------------------------------------------------------
 
 function getSentence($seid, $wordlc,$mode) {
+	global $thedb;
 	$txtid = get_first_value('select SeTxID as value from sentences where SeID = ' . $seid);
 	$seidlist = $seid;
 	if ($mode > 1) {
@@ -1823,13 +1824,12 @@ function getSentence($seid, $wordlc,$mode) {
 		}
 	}
 	$sql2 = 'SELECT TiText, TiTextLC, TiWordCount, TiIsNotWord FROM textitems WHERE TiSeID in (' . $seidlist . ') and TiTxID=' . $txtid . ' order by TiOrder asc, TiWordCount desc';
-	$res2 = mysql_query($sql2);		
-	if ($res2 == FALSE) die("Invalid query: $sql2");
 	$sejs=''; 
 	$se='';
 	$notfound = 1;
 	$jump=0;
-	while ($record2 = mysql_fetch_assoc($res2)) {
+	$res2 = $thedb->exec_query($sql);
+	foreach ($res2 as $record2) {
 		if ($record2['TiIsNotWord'] == 1) {
 			$jump--;
 			if ($jump < 0) {
@@ -1864,7 +1864,7 @@ function getSentence($seid, $wordlc,$mode) {
 			}
 		}
 	}
-	mysql_free_result($res2);
+	unset($res2);
 	return array($se,$sejs); // [0]=html, word in bold
 	                         // [1]=text, word in {} 
 }
@@ -1872,13 +1872,13 @@ function getSentence($seid, $wordlc,$mode) {
 // -------------------------------------------------------------
 
 function get20Sentences($lang, $wordlc, $jsctlname, $mode) {
+	global $thedb;
 	$r = '<p><b>Sentences in active texts with <i>' . tohtml($wordlc) . '</i></b></p><p>(Click on <img src="icn/tick-button.png" title="Choose" alt="Choose" /> to copy sentence into above term)</p>';
 	$sql = 'SELECT DISTINCT SeID, SeText FROM sentences, textitems WHERE TiTextLC = ' . convert_string_to_sqlsyntax($wordlc) . ' AND SeID = TiSeID AND SeLgID = ' . $lang . ' order by CHAR_LENGTH(SeText), SeText limit 0,20';
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
 	$r .= '<p>';
 	$last = '';
-	while ($record = mysql_fetch_assoc($res)) {
+	$res = $thedb->exec_query($sql);
+	foreach ($res as $record) {
 		if ($last != $record['SeText']) {
 			$sent = getSentence($record['SeID'], $wordlc,$mode);
 			$r .= '<span class="click" onclick="' . $jsctlname . '.value=' . prepare_textdata_js($sent[1]) . ';"><img src="icn/tick-button.png" title="Choose" alt="Choose" /></span> &nbsp;' . $sent[0] . '<br />';
@@ -2018,14 +2018,12 @@ function echodebug($var,$text) {
 // -------------------------------------------------------------
 
 function checkText($text, $lid) {
-	
+	global $thedb;
 	$r = '';
 
 	$sql = "select * from languages where LgID=" . $lid;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	$record = mysql_fetch_assoc($res);
-	if ($record == FALSE) die("No results: $sql");
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record === FALSE) die("No results: $sql");
 	$removeSpaces = $record['LgRemoveSpaces'];
 	// echodebug($removeSpaces,'$removeSpaces');
 	$splitEachChar = $record['LgSplitEachChar'];
@@ -2039,7 +2037,7 @@ function checkText($text, $lid) {
 	$replace = explode("|",$record['LgCharacterSubstitutions']);
 	// echodebug($replace,'$replace');
 	$rtlScript = $record['LgRightToLeft'];
-	mysql_free_result($res);
+	unset($record);
 	// echodebug($text,'$text');
 	$s = prepare_textdata($text);
 	// echodebug($s,'$s/1');
@@ -2169,18 +2167,17 @@ function checkText($text, $lid) {
 
 function splitText($text, $lid, $id) {
 
+	global $thedb;
 	$sql = "select * from languages where LgID=" . $lid;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	$record = mysql_fetch_assoc($res);
-	if ($record == FALSE) die("No results: $sql");
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record === FALSE) die("No results: $sql");
 	$removeSpaces = $record['LgRemoveSpaces'];
 	$splitEachChar = $record['LgSplitEachChar'];
 	$splitSentence = $record['LgRegexpSplitSentences'];
 	$noSentenceEnd = $record['LgExceptionsSplitSentences'];
 	$termchar = $record['LgRegexpWordCharacters'];
 	$replace = explode("|",$record['LgCharacterSubstitutions']);
-	mysql_free_result($res);
+	unset($record);
 	$s = str_replace("\r\n", "\n", $text);
 	$s = str_replace("\n", " ¶ ", $s);
 	$s = str_replace("\t", " ", $s);
@@ -2329,33 +2326,32 @@ function refreshText($word,$tid) {
 	// $word : only sentences with $word
 	// $tid : textid
 	// only to be used when $showAll = 0 !
+	global $thedb;
 	$out = '';
 	$wordlc = trim(mb_strtolower($word, 'UTF-8'));
 	if ( $wordlc == '') return '';
 	$sql = 'SELECT distinct TiSeID FROM textitems WHERE TiIsNotWord = 0 and TiTextLC = ' . convert_string_to_sqlsyntax($wordlc) . ' and TiTxID = ' . $tid . ' order by TiSeID';
-	$res = mysql_query($sql);		
-	if ($res == FALSE) return '';
+	$res = $thedb->exec_query($sql);
 	$inlist = '(';
-	while ($record = mysql_fetch_assoc($res)) { 
+	foreach ($res as $record) {
 		if ($inlist == '(') 
 			$inlist .= $record['TiSeID'];
 		else
 			$inlist .= ',' . $record['TiSeID'];
 	}
-	mysql_free_result($res);
+	unset($res);
 	if ($inlist == '(') 
 		return '';
 	else
 		$inlist =  ' where TiSeID in ' . $inlist . ') ';
 	$sql = 'select TiWordCount as Code, TiOrder, TiIsNotWord, WoID from (textitems left join words on (TiTextLC = WoTextLC) and (TiLgID = WoLgID)) ' . $inlist . ' order by TiOrder asc, TiWordCount desc';
 
-	$res = mysql_query($sql);		
-	if ($res == FALSE) return '';
+	$res = $thedb->exec_query($sql);
 
 	$hideuntil = -1;
 	$hidetag = "removeClass('hide');";
 
-	while ($record = mysql_fetch_assoc($res)) {  // MAIN LOOP
+	foreach ($res as $record) {  // MAIN LOOP
 		$actcode = $record['Code'] + 0;
 		$order = $record['TiOrder'] + 0;
 		$notword = $record['TiIsNotWord'] + 0;
@@ -2391,7 +2387,7 @@ function refreshText($word,$tid) {
 			}  
 		}
 	} //  MAIN LOOP
-	mysql_free_result($res);
+	unset($res);
 	return $out;
 }
 

@@ -161,7 +161,7 @@ foreach ($res as $record) {  // MAIN LOOP
 	
 	if ($actcode == 1) $currcharcount += mb_strlen($record['TiText'], 'UTF-8'); 
 	
-} // while ($record = mysql_fetch_assoc($res))  -- MAIN LOOP
+} //  -- MAIN LOOP
 
 unset($res);
 echo '<span id="totalcharcount" class="hide">' . $currcharcount . '</span></p><p style="font-size:' . $textsize . '%;line-height: 1.4; margin-bottom: 300px;">&nbsp;</p></div>';

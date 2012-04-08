@@ -80,9 +80,8 @@ if ($count <= 0) {
 	$lang = get_first_value('select WoLgID as value from ' . $testsql . ' limit 1');
 	
 	$sql = 'select LgName, LgDict1URI, LgDict2URI, LgGoogleTranslateURI, LgTextSize, LgRemoveSpaces, LgRegexpWordCharacters, LgRightToLeft from languages where LgID = ' . $lang;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid query: $sql");
-	$record = mysql_fetch_assoc($res);
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record === FALSE) die("Language not found")
 	$wb1 = isset($record['LgDict1URI']) ? $record['LgDict1URI'] : "";
 	$wb2 = isset($record['LgDict2URI']) ? $record['LgDict2URI'] : "";
 	$wb3 = isset($record['LgGoogleTranslateURI']) ? $record['LgGoogleTranslateURI'] : "";
@@ -91,7 +90,7 @@ if ($count <= 0) {
 	$regexword = $record['LgRegexpWordCharacters'];
 	$rtlScript = $record['LgRightToLeft'];
 	$langname = $record['LgName'];
-	mysql_free_result($res);
+	unset($record);
 	
 	// Find the next word to test
 	
@@ -101,10 +100,8 @@ if ($count <= 0) {
 		$pass++;
 		$sql = 'SELECT DISTINCT WoID, WoText, WoTextLC, WoTranslation, WoRomanization, WoSentence, (ifnull(WoSentence,\'\') not like concat(\'%{\',WoText,\'}%\')) as notvalid, WoStatus, DATEDIFF( NOW( ), WoStatusChanged ) AS Days, WoTodayScore AS Score FROM ' . $testsql . ' AND WoStatus BETWEEN 1 AND 5 AND WoTranslation != \'\' AND WoTranslation != \'*\' AND WoTodayScore < 0 ' . ($pass == 1 ? 'AND WoRandom > RAND()' : '') . ' order by WoTodayScore, WoRandom LIMIT 1';
 		if ($debug) echo 'DEBUG TEST-SQL: ' . $sql . '<br />';
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid query: $sql");
-		$record = mysql_fetch_assoc($res);
-		if ( $record ) {
+		$record = $thedb->exec_query_onlyfirst($sql);
+		if ($record !== FALSE) {
 			$num = 1;
 			$wid = $record['WoID'];
 			$word = $record['WoText'];
@@ -118,7 +115,7 @@ if ($count <= 0) {
 			$score = $record['Score'];
 			$pass = 2;
 		}
-		mysql_free_result($res);
+		unset($record);
 	}
 	
 	if ($num == 0) {
@@ -140,10 +137,8 @@ if ($count <= 0) {
 				$pass++;
 				if ($debug) echo "DEBUG search sent: pass: $pass <br />";
 				$sql = 'SELECT DISTINCT SeID FROM sentences, textitems WHERE TiTextLC = ' . convert_string_to_sqlsyntax($wordlc) . $sentexcl . ' AND SeID = TiSeID AND SeLgID = ' . $lang . ' order by rand() limit 1';
-				$res = mysql_query($sql);		
-				if ($res == FALSE) die("Invalid query: $sql");
-				$record = mysql_fetch_assoc($res);
-				if ( $record ) {  // random sent found
+				$record = $thedb->exec_query_onlyfirst($sql);
+				if ($record !== FALSE) {  // random sent found
 					$num = 1;
 					$seid = $record['SeID'];
 					if (AreUnknownWordsInSentence ($seid)) {
@@ -165,7 +160,7 @@ if ($count <= 0) {
 					if ($debug) echo "DEBUG no random sent found<br />";
 					// no sent. take term sent. $num == 0
 				}
-				mysql_free_result($res);
+				unset($record);
 			} // while ( $pass < 3 )
 		}  // $nosent == FALSE
 	
