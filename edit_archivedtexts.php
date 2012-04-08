@@ -87,9 +87,11 @@ if (isset($_REQUEST['markaction'])) {
 				$list .= ")";
 				
 				if ($markaction == 'del') {
+					$thedb->begin_transaction();
 					$message = runsql('delete from archivedtexts where AtID in ' . $list, "Archived Texts deleted");
 					adjust_autoincr('archivedtexts','AtID');
 					runsql("DELETE archtexttags FROM (archtexttags LEFT JOIN archivedtexts on AgAtID = AtID) WHERE AtID IS NULL",'');
+					$thedb->commit_transaction();
 				} 
 
 				elseif ($markaction == 'addtag' ) {
@@ -105,9 +107,8 @@ if (isset($_REQUEST['markaction'])) {
 				elseif ($markaction == 'unarch') {
 					$count = 0;
 					$sql = "select AtID, AtLgID from archivedtexts where AtID in " . $list;
-					$res = mysql_query($sql);		
-					if ($res == FALSE) die("Invalid Query: $sql");
-					while ($record = mysql_fetch_assoc($res)) {
+					$res = $thedb->exec_query($sql);
+					foreach ($res as $record) {
 						$ida = $record['AtID'];
 						$mess = 0 + runsql('insert into texts (TxLgID, TxTitle, TxText, TxAudioURI) select AtLgID, AtTitle, AtText, AtAudioURI from archivedtexts where AtID = ' . $ida, "");
 						$count += $mess;
@@ -120,7 +121,7 @@ if (isset($_REQUEST['markaction'])) {
 							$id );	
 						runsql('delete from archivedtexts where AtID = ' . $ida, "");
 					}
-					mysql_free_result($res);
+					unset($res);
 					adjust_autoincr('archivedtexts','AtID');
 					runsql("DELETE archtexttags FROM (archtexttags LEFT JOIN archivedtexts on AgAtID = AtID) WHERE AtID IS NULL",'');
 					$message = 'Unarchived Text(s): ' . $count;
@@ -134,10 +135,12 @@ if (isset($_REQUEST['markaction'])) {
 // DEL
 
 if (isset($_REQUEST['del'])) {
+	$thedb->begin_transaction();
 	$message = runsql('delete from archivedtexts where AtID = ' . $_REQUEST['del'], 
 		"Archived Texts deleted");
 	adjust_autoincr('archivedtexts','AtID');
 	runsql("DELETE archtexttags FROM (archtexttags LEFT JOIN archivedtexts on AgAtID = AtID) WHERE AtID IS NULL",'');
+	$thedb->commit_transaction();
 }
 
 // UNARCH
@@ -182,9 +185,8 @@ elseif (isset($_REQUEST['op'])) {
 if (isset($_REQUEST['chg'])) {
 	
 	$sql = 'select AtLgID, AtTitle, AtText, AtAudioURI from archivedtexts where AtID = ' . $_REQUEST['chg'];
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	if ($record = mysql_fetch_assoc($res)) {
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record === FALSE) die("Archived Text for Update not found");
 
 		?>
 	
@@ -234,8 +236,7 @@ if (isset($_REQUEST['chg'])) {
 		
 		<?php
 
-	}
-	mysql_free_result($res);
+	unset($record);
 
 }
 
@@ -344,9 +345,8 @@ $sql = 'select AtID, AtTitle, LgName, AtAudioURI, ifnull(concat(\'[\',group_conc
 
 if ($debug) echo $sql;
 
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-while ($record = mysql_fetch_assoc($res)) {
+$res = $thedb->exec_query($sql);
+foreach ($res as $record) {
 	echo '<tr>';
 	echo '<td class="td1 center"><a name="rec' . $record['AtID'] . '"><input name="marked[]" class="markcheck"  type="checkbox" value="' . $record['AtID'] . '" ' . checkTest($record['AtID'], 'marked') . ' /></a></td>';
 	echo '<td nowrap="nowrap" class="td1 center">&nbsp;<a href="' . $_SERVER['PHP_SELF'] . '?unarch=' . $record['AtID'] . '"><img src="icn/inbox-upload.png" title="Unarchive" alt="Unarchive" /></a>&nbsp; <a href="' . $_SERVER['PHP_SELF'] . '?chg=' . $record['AtID'] . '"><img src="icn/document--pencil.png" title="Edit" alt="Edit" /></a>&nbsp; <span class="click" onclick="if (confirm (\'Are you sure?\')) location.href=\'' . $_SERVER['PHP_SELF'] . '?del=' . $record['AtID'] . '\';"><img src="icn/minus-button.png" title="Delete" alt="Delete" /></span>&nbsp;</td>';
@@ -354,7 +354,7 @@ while ($record = mysql_fetch_assoc($res)) {
 	echo '<td class="td1 center">' . tohtml($record['AtTitle']) . ' <span class="smallgray2">' . tohtml($record['taglist']) . '</span> &nbsp;'  . (isset($record['AtAudioURI']) ? '<img src="icn/speaker-volume.png" title="With Audio" alt="With Audio" />' : '') . '</td>';
 	echo '</tr>';
 }
-mysql_free_result($res);
+unset($res);
 
 ?>
 

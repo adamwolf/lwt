@@ -94,6 +94,7 @@ if (isset($_REQUEST['markaction'])) {
 				$list .= ")";
 				
 				if ($markaction == 'del') {
+					$thedb->begin_transaction();
 					$message3 = runsql('delete from textitems where TiTxID in ' . $list, "Text items deleted");
 					$message2 = runsql('delete from sentences where SeTxID in ' . $list, "Sentences deleted");
 					$message1 = runsql('delete from texts where TxID in ' . $list, "Texts deleted");
@@ -102,28 +103,30 @@ if (isset($_REQUEST['markaction'])) {
 					adjust_autoincr('sentences','SeID');
 					adjust_autoincr('textitems','TiID');
 					runsql("DELETE texttags FROM (texttags LEFT JOIN texts on TtTxID = TxID) WHERE TxID IS NULL",'');
+					$thedb->commit_transaction();
 				} 
 				
 				elseif ($markaction == 'arch') {
+					$thedb->begin_transaction();
 					runsql('delete from textitems where TiTxID in ' . $list, "");
 					runsql('delete from sentences where SeTxID in ' . $list, "");
 					$count = 0;
 					$sql = "select TxID from texts where TxID in " . $list;
-					$res = mysql_query($sql);		
-					if ($res == FALSE) die("Invalid Query: $sql");
-					while ($record = mysql_fetch_assoc($res)) {
+					$res = $thedb->exec_query($sql);
+					foreach ($res as $record) {
 						$id = $record['TxID'];
 						$count += (0 + runsql('insert into archivedtexts (AtLgID, AtTitle, AtText, AtAudioURI) select TxLgID, TxTitle, TxText, TxAudioURI from texts where TxID = ' . $id, ""));
 						$aid = get_last_key();
 						runsql('insert into archtexttags (AgAtID, AgT2ID) select ' . $aid . ', TtT2ID from texttags where TtTxID = ' . $id, "");	
 					}
-					mysql_free_result($res);
+					unset($res);
 					$message = 'Text(s) archived: ' . $count;
 					runsql('delete from texts where TxID in ' . $list, "");
 					runsql("DELETE texttags FROM (texttags LEFT JOIN texts on TtTxID = TxID) WHERE TxID IS NULL",'');
 					adjust_autoincr('texts','TxID');
 					adjust_autoincr('sentences','SeID');
 					adjust_autoincr('textitems','TiID');
+					$thedb->commit_transaction();
 				} 
 				
 				elseif ($markaction == 'addtag' ) {
@@ -137,24 +140,24 @@ if (isset($_REQUEST['markaction'])) {
 				}
 				
 				elseif ($markaction == 'setsent') {
+					$thedb->begin_transaction();
 					$count = 0;
 					$sql = "select WoID, WoTextLC, min(TiSeID) as SeID from words, textitems where TiLgID = WoLgID and TiTextLC = WoTextLC and TiTxID in " . $list . " and ifnull(WoSentence,'') not like concat('%{',WoText,'}%') group by WoID order by WoID, min(TiSeID)";
-					$res = mysql_query($sql);		
-					if ($res == FALSE) die("Invalid Query: $sql");
-					while ($record = mysql_fetch_assoc($res)) {
+					$res = $thedb->exec_query($sql);
+					foreach ($res as $record) {
 						$sent = getSentence($record['SeID'], $record['WoTextLC'], (int) getSettingWithDefault('set-term-sentence-count'));
 						$count += runsql('update words set WoSentence = ' . convert_string_to_sqlsyntax(repl_tab_nl($sent[1])) . ' where WoID = ' . $record['WoID'], '');
 					}
-					mysql_free_result($res);
+					unset($res);
 					$message = 'Term Sentences set from Text(s): ' . $count;
+					$thedb->commit_transaction();
 				} 
 				
 				elseif ($markaction == 'rebuild') {
 					$count = 0;
 					$sql = "select TxID, TxLgID from texts where TxID in " . $list;
-					$res = mysql_query($sql);		
-					if ($res == FALSE) die("Invalid Query: $sql");
-					while ($record = mysql_fetch_assoc($res)) {
+					$res = $thedb->exec_query($sql);
+					foreach ($res as $record) {
 						$id = $record['TxID'];
 						$message2 = runsql('delete from sentences where SeTxID = ' . $id, "Sentences deleted");
 						$message3 = runsql('delete from textitems where TiTxID = ' . $id, "Text items deleted");
@@ -166,7 +169,7 @@ if (isset($_REQUEST['markaction'])) {
 								$record['TxLgID'], $id );
 						$count++;
 					}
-					mysql_free_result($res);
+					unset($res);
 					$message = 'Text(s) re-parsed: ' . $count;
 				}
 				
@@ -184,6 +187,7 @@ if (isset($_REQUEST['markaction'])) {
 // DEL
 
 if (isset($_REQUEST['del'])) {
+	$thedb->begin_transaction();
 	$message3 = runsql('delete from textitems where TiTxID = ' . $_REQUEST['del'], 
 		"Text items deleted");
 	$message2 = runsql('delete from sentences where SeTxID = ' . $_REQUEST['del'], 
@@ -195,11 +199,13 @@ if (isset($_REQUEST['del'])) {
 	adjust_autoincr('sentences','SeID');
 	adjust_autoincr('textitems','TiID');
 	runsql("DELETE texttags FROM (texttags LEFT JOIN texts on TtTxID = TxID) WHERE TxID IS NULL",'');
+	$thedb->commit_transaction();
 }
 
 // ARCH
 
 elseif (isset($_REQUEST['arch'])) {
+	$thedb->begin_transaction();
 	$message3 = runsql('delete from textitems where TiTxID = ' . $_REQUEST['arch'], 
 		"Text items deleted");
 	$message2 = runsql('delete from sentences where SeTxID = ' . $_REQUEST['arch'], 
@@ -213,6 +219,7 @@ elseif (isset($_REQUEST['arch'])) {
 	adjust_autoincr('sentences','SeID');
 	adjust_autoincr('textitems','TiID');
 	runsql("DELETE texttags FROM (texttags LEFT JOIN texts on TtTxID = TxID) WHERE TxID IS NULL",'');
+	$thedb->commit_transaction();
 }
 
 // INS/UPD
@@ -346,9 +353,8 @@ if (isset($_REQUEST['new'])) {
 elseif (isset($_REQUEST['chg'])) {
 	
 	$sql = 'select TxLgID, TxTitle, TxText, TxAudioURI from texts where TxID = ' . $_REQUEST['chg'];
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	if ($record = mysql_fetch_assoc($res)) {
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record === FALSE) die("Update record not found");
 
 		?>
 	
@@ -401,8 +407,7 @@ elseif (isset($_REQUEST['chg'])) {
 		
 		<?php
 
-	}
-	mysql_free_result($res);
+	unset($record);
 
 }
 
@@ -514,12 +519,11 @@ Marked Texts:&nbsp;
 
 <?php
 
+$showCounts = getSettingWithDefault('set-show-text-word-counts')+0;
 $sql = 'select TxID, TxTitle, LgName, TxAudioURI, ifnull(concat(\'[\',group_concat(distinct T2Text order by T2Text separator \', \'),\']\'),\'\') as taglist from ((texts left JOIN texttags ON TxID = TtTxID) left join tags2 on T2ID = TtT2ID), languages where LgID=TxLgID ' . $wh_lang . $wh_query . ' group by TxID ' . $wh_tag . ' order by ' . $sorts[$currentsort-1] . ' ' . $limit;
 if ($debug) echo $sql;
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-$showCounts = getSettingWithDefault('set-show-text-word-counts')+0;
-while ($record = mysql_fetch_assoc($res)) {
+$res = $thedb->exec_query($sql);
+foreach ($res as $record) {
 	if ($showCounts) {
 		flush();
 		$txttotalwords = textwordcount($record['TxID']);
@@ -554,7 +558,7 @@ while ($record = mysql_fetch_assoc($res)) {
 	}
 	echo '</tr>';
 }
-mysql_free_result($res);
+unset($res);
 
 ?>
 </table>

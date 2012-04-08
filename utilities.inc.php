@@ -1573,6 +1573,7 @@ function makeOpenDictStrDynSent($url, $sentctljs, $txt) {
 // -------------------------------------------------------------
 
 function createDictLinksInEditWin2($lang,$sentctljs,$wordctljs) {
+	global $thedb;
 	$sql = 'select LgDict1URI, LgDict2URI, LgGoogleTranslateURI from languages where LgID = ' . $lang;
 	$record = $thedb->exec_query_onlyfirst($sql);		
 	if ($record === FALSE) die("Language not found");
@@ -1596,6 +1597,7 @@ function createDictLinksInEditWin2($lang,$sentctljs,$wordctljs) {
 // -------------------------------------------------------------
 
 function createDictLinksInEditWin3($lang,$sentctljs,$wordctljs) {
+	global $thedb;
 	$sql = 'select LgDict1URI, LgDict2URI, LgGoogleTranslateURI from languages where LgID = ' . $lang;
 	$record = $thedb->exec_query_onlyfirst($sql);		
 	if ($record === FALSE) die("Language not found");
@@ -1885,7 +1887,7 @@ function get20Sentences($lang, $wordlc, $jsctlname, $mode) {
 		}
 		$last = $record['SeText'];
 	}
-	mysql_free_result($res);
+	unset($res);
 	$r .= '</p>';
 	return $r;
 }
@@ -2235,6 +2237,7 @@ function splitText($text, $lid, $id) {
 	$sentNumber = 0;
 	$lfdnr =0;
 
+	$thedb->begin_transaction();
 	foreach ($textLines as $value) { 
 		
 		$dummy = runsql('INSERT INTO sentences (SeLgID, SeTxID, SeOrder, SeText) VALUES (' . $lid . ',' .  $id . ',' .  ($sentNumber+1) . ',' . convert_string_to_sqlsyntax_notrim_nonull(remove_spaces($value . ' ', $removeSpaces)) . ')', ' ');
@@ -2303,6 +2306,7 @@ function splitText($text, $lid, $id) {
 		if ($lfdnr > 0) $dummy = runsql($sqltext,'');
 		$sentNumber += 1;
 	} 
+	$thedb->commit_transaction();
 
 }
 
