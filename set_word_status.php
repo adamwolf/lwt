@@ -25,17 +25,15 @@ $wid = $_REQUEST['wid'];
 $status = $_REQUEST['status'];
 
 $sql = 'SELECT WoText, WoTranslation, WoRomanization FROM words where WoID = ' . $wid;
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-$record = mysql_fetch_assoc($res);
-if ($record) {
+$record = $thedb->exec_query_onlyfirst($sql);
+if ($record !== FALSE) {
 	$word = $record['WoText'];
 	$trans = repl_tab_nl($record['WoTranslation']) . getWordTagList($wid,' ',1,0);
 	$roman = $record['WoRomanization'];
 } else {
 	die("Error: No results"); 
 }
-mysql_free_result($res);
+unset($record);
 
 pagestart("Term: " . $word, false);
 

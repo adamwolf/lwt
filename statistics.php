@@ -53,9 +53,8 @@ $sum599 = 0;
 $sumall = 0;
 
 $sql = 'SELECT LgID, LgName FROM languages ORDER BY LgName';
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-while ($record = mysql_fetch_assoc($res)) {
+$res = $thedb->exec_query($sql);
+foreach ($res as $record) {
 	$lang = $record['LgID'];
 	
 	flush();
@@ -99,7 +98,7 @@ while ($record = mysql_fetch_assoc($res)) {
 	echo '</tr>';
 	
 }
-mysql_free_result($res);
+unset($res);
 echo '<tr>';
 echo '<th class="th1"><b>TOTAL</b></th>';
 echo '<th class="th1 center"><a href="edit_words.php?page=1&amp;text=&amp;query=&amp;filterlang=&amp;status=&amp;tag12=0&amp;tag2=&amp;tag1="><b>' . $sumall . '</b></a></th>';
@@ -173,9 +172,8 @@ $sumkall = 0;
 </tr>
 <?php
 $sql = 'SELECT LgID, LgName FROM languages ORDER BY LgName';
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-while ($record = mysql_fetch_assoc($res)) {
+$res = $thedb->exec_query($sql);
+foreach ($res as $record) {
 	$lang = $record['LgID'];
 
 	flush();
@@ -251,7 +249,7 @@ while ($record = mysql_fetch_assoc($res)) {
 	
 	echo '</tr>';
 }
-mysql_free_result($res);
+unset($res);
 echo '<tr>';
 echo '<th class="th1"><b>TOTAL</b></th>';
 

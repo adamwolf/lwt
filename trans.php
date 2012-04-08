@@ -28,17 +28,15 @@ $t = stripTheSlashesIfNeeded($_REQUEST["t"]);
 
 if ( $x == 1 ) {
 	$sql = 'select SeText, LgGoogleTranslateURI from languages, sentences, textitems where TiSeID = SeID and TiLgID = LgID and TiTxID = ' . $t . ' and TiOrder = ' . $i;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	$record = mysql_fetch_assoc($res);
-	if ($record) {
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record !== FALSE) {
 		$satz = $record['SeText'];
 		$trans = isset($record['LgGoogleTranslateURI']) ? $record['LgGoogleTranslateURI'] : "";
 		if(substr($trans,0,1) == '*') $trans = substr($trans,1);
 	} else {
 		die("Error: No results: $sql"); 
 	}
-	mysql_free_result($res);
+	unset($record);
 	if ($trans != '') {
 		/*
 		echo "{" . $i . "}<br />";

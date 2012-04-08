@@ -719,9 +719,7 @@ function prepare_textdata($s) {
 // -------------------------------------------------------------
 
 function prepare_textdata_js($s) {
-	$s = convert_string_to_sqlsyntax($s);
-	if($s == "NULL") return "''";
-	return str_replace("''", "\\'", $s);
+	return "'" . str_replace("'", "\\'", str_replace("\\", "\\\\", $s)) . "'";
 }
 
 // -------------------------------------------------------------
@@ -1503,14 +1501,14 @@ function createTheDictLink($u,$t) {
 // -------------------------------------------------------------
 
 function createDictLinksInEditWin($lang,$word,$sentctljs,$openfirst) {
+	global $thedb;
 	$sql = 'select LgDict1URI, LgDict2URI, LgGoogleTranslateURI from languages where LgID = ' . $lang;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	$record = mysql_fetch_assoc($res);
+	$record = $thedb->exec_query_onlyfirst($sql);		
+	if ($record === FALSE) die("Language not found");
 	$wb1 = isset($record['LgDict1URI']) ? $record['LgDict1URI'] : "";
 	$wb2 = isset($record['LgDict2URI']) ? $record['LgDict2URI'] : "";
 	$wb3 = isset($record['LgGoogleTranslateURI']) ? $record['LgGoogleTranslateURI'] : "";
-	mysql_free_result($res);
+	unset($record);
 	$r ='';
 	if ($openfirst) {
 		$r .= '<script type="text/javascript">';
@@ -1576,16 +1574,15 @@ function makeOpenDictStrDynSent($url, $sentctljs, $txt) {
 
 function createDictLinksInEditWin2($lang,$sentctljs,$wordctljs) {
 	$sql = 'select LgDict1URI, LgDict2URI, LgGoogleTranslateURI from languages where LgID = ' . $lang;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	$record = mysql_fetch_assoc($res);
+	$record = $thedb->exec_query_onlyfirst($sql);		
+	if ($record === FALSE) die("Language not found");
 	$wb1 = isset($record['LgDict1URI']) ? $record['LgDict1URI'] : "";
 	if(substr($wb1,0,1) == '*') $wb1 = substr($wb1,1);
 	$wb2 = isset($record['LgDict2URI']) ? $record['LgDict2URI'] : "";
 	if(substr($wb2,0,1) == '*') $wb2 = substr($wb2,1);
 	$wb3 = isset($record['LgGoogleTranslateURI']) ? $record['LgGoogleTranslateURI'] : "";
 	if(substr($wb3,0,1) == '*') $wb3 = substr($wb3,1);
-	mysql_free_result($res);
+	unset($record);
 	$r ='';
 	$r .= 'Lookup Term: ';
 	$r .= '<span class="click" onclick="translateWord2(' . prepare_textdata_js($wb1) . ',' . $wordctljs . ');">Dict1</span> ';
@@ -1600,9 +1597,8 @@ function createDictLinksInEditWin2($lang,$sentctljs,$wordctljs) {
 
 function createDictLinksInEditWin3($lang,$sentctljs,$wordctljs) {
 	$sql = 'select LgDict1URI, LgDict2URI, LgGoogleTranslateURI from languages where LgID = ' . $lang;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	$record = mysql_fetch_assoc($res);
+	$record = $thedb->exec_query_onlyfirst($sql);		
+	if ($record === FALSE) die("Language not found");
 	
 	$wb1 = isset($record['LgDict1URI']) ? $record['LgDict1URI'] : "";
 	if(substr($wb1,0,1) == '*') 
@@ -1625,7 +1621,7 @@ function createDictLinksInEditWin3($lang,$sentctljs,$wordctljs) {
 		$f4 = 'translateSentence(' . prepare_textdata_js($wb3);
 	}
 
-	mysql_free_result($res);
+	unset($record);
 	$r ='';
 	$r .= 'Lookup Term: ';
 	$r .= '<span class="click" onclick="' . $f1 . ',' . $wordctljs . ');">Dict1</span> ';
