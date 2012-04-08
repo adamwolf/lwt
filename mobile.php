@@ -60,8 +60,7 @@ if (isset($_REQUEST["action"])) {  // Action
 		$langname = getLanguage($lang);
 		$sql = 'select TxID, TxTitle from texts where TxLgID = ' . $lang . 
 		' order by TxTitle';
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid Query: $sql");
+		$res = $thedb->exec_query($sql);
 
 		?>
 
@@ -69,7 +68,7 @@ if (isset($_REQUEST["action"])) {  // Action
 
 		<?php
 
-		while ($record = mysql_fetch_assoc($res)) {
+		foreach ($res as $record) {
 			echo '<li><a href="mobile.php?action=3&amp;lang=' . 
 				$lang . '&amp;text=' . $record["TxID"] . '">' .
 				tohtml($record["TxTitle"]) . '</a></li>';	
@@ -79,7 +78,7 @@ if (isset($_REQUEST["action"])) {  // Action
 
 		</ul>
 		<?php
-		mysql_free_result($res);
+		unset($res);
 	
 	} // $action == 2
 	
@@ -92,8 +91,7 @@ if (isset($_REQUEST["action"])) {  // Action
 		$texttitle = get_first_value('select TxTitle as value from texts where TxID = ' . $text);
 		$textaudio = get_first_value('select TxAudioURI as value from texts where TxID = ' . $text);
 		$sql = 'select SeID, SeText from sentences where SeTxID = ' . $text . ' order by SeOrder';
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid Query: $sql");
+		$res = $thedb->exec_query($sql);
 
 		?>
 
@@ -120,7 +118,7 @@ if (isset($_REQUEST["action"])) {  // Action
 
 		<?php
 		
-		while ($record = mysql_fetch_assoc($res)) {
+		foreach ($res as $record) {
 			if (trim($record["SeText"]) != '¶')
 			 echo '<li><a href="mobile.php?action=4&amp;lang=' . 
 				$lang . '&amp;text=' . $text . 
@@ -134,7 +132,7 @@ if (isset($_REQUEST["action"])) {  // Action
 
 		<?php
 		
-		mysql_free_result($res);
+		unset($res);
 	
 	} // $action == 3
 	
@@ -148,7 +146,7 @@ if (isset($_REQUEST["action"])) {  // Action
 		$senttext = get_first_value('select SeText as value from sentences where SeID = ' . $sent);
 		$nextsent = get_first_value('select SeID as value from sentences where SeTxID = ' . $text . ' and trim(SeText) != \'¶\' and SeID > ' . $sent . ' order by SeID limit 1');
 		$sql = 'select TiWordCount as Code, TiText, TiOrder, TiIsNotWord, WoID, WoTranslation, WoRomanization, WoStatus from (textitems left join words on (TiTextLC = WoTextLC) and (TiLgID = WoLgID)) where TiSeID = ' . $sent . ' and (not (TiWordCount > 1 and WoID is null)) order by TiOrder asc, TiWordCount desc';
-		$res = mysql_query($sql);		
+		$res = $thedb->exec_query($sql);		
 		if ($res == FALSE) die("Invalid Query: $sql");
 		
 		if ($action == 4) {
@@ -173,7 +171,7 @@ if (isset($_REQUEST["action"])) {  // Action
 		$saverom = '';
 		$savestat = '';
 		$until = 0;
-		while ($record = mysql_fetch_assoc($res)) {
+		foreach ($res as $record) {
 			$actcode = $record['Code'] + 0;
 			$order = $record['TiOrder'] + 0;
 			
@@ -208,7 +206,6 @@ if (isset($_REQUEST["action"])) {  // Action
 				$savestat = $record['WoStatus'];
 			}
 		} 
-		mysql_free_result($res);
 		if (trim($saveterm) != '') {
 			$desc = trim(($saverom != '' ? '[' . $saverom . '] ' : '') . $savetrans);
 			echo '<li><span class="status' . $savestat . '">' . tohtml($saveterm) . '</span>' . 
@@ -231,7 +228,7 @@ if (isset($_REQUEST["action"])) {  // Action
 		
 		}
 		
-		mysql_free_result($res);
+		unset($res);
 	
 	} // $action == 4 / 5
 	
@@ -289,13 +286,13 @@ span.status5 {
 	<li class="group">Languages</li>
 <?php
 	$sql = 'select LgID, LgName from languages order by LgName';
-	$res = mysql_query($sql);		
+	$res = $thedb->exec_query($sql);		
 	if ($res == FALSE) die("Invalid Query: $sql");
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		echo '<li><a href="mobile.php?action=2&amp;lang=' . $record["LgID"] . '">' .
 			tohtml($record["LgName"]) . '</a></li>';	
 	}
-	mysql_free_result($res);
+	unset($res);
 ?>
 	<li class="group">Other</li>
 	<li><a href="#about">About</a></li>

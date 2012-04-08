@@ -39,14 +39,14 @@ if (isset($_REQUEST['refresh'])) {
 	adjust_autoincr('sentences','SeID');
 	adjust_autoincr('textitems','TiID');
 	$sql = "select TxID, TxText from texts where TxLgID = " . $id . " order by TxID";
-	$res = mysql_query($sql);		
+	$res = $thedb->exec_query($sql);		
 	if ($res == FALSE) die("Invalid Query: $sql");
-	while ($record = mysql_fetch_assoc($res)) {
+	foreach ($res as $record) {
 		$txtid = $record["TxID"];
 		$txttxt = $record["TxText"];
 		splitText($txttxt, $id, $txtid );
 	}
-	mysql_free_result($res);
+	unset($res);
 	$message = $message2 . " / " . $message3 . " / Sentences added: " . get_first_value('select count(*) as value from sentences where SeLgID = ' . $id) . " / Text items added: " . get_first_value('select count(*) as value from textitems where TiLgID = ' . $id);
 }
 
@@ -186,9 +186,8 @@ if (isset($_REQUEST['new'])) {
 elseif (isset($_REQUEST['chg'])) {
 	
 	$sql = 'select * from languages where LgID = ' . $_REQUEST['chg'];
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	if ($record = mysql_fetch_assoc($res)) {
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record === FALSE) die ("Language for Update not found");
 	
 		?>
 	
@@ -256,8 +255,7 @@ elseif (isset($_REQUEST['chg'])) {
 		</form>
 		<?php
 
-	}
-	mysql_free_result($res);
+	unset($record);
 }
 
 // DISPLAY
@@ -297,9 +295,9 @@ if ($recno==0) {
 
 $sql = 'select LgID, LgName from languages order by LgName';
 if ($debug) echo $sql;
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-while ($record = mysql_fetch_assoc($res)) {
+$res = $thedb->exec_query($sql);		
+
+foreach ($res as $record) {
 	$textcount = get_first_value('select count(TxID) as value from texts where TxLgID=' . $record['LgID']);
 	$archtextcount = get_first_value('select count(AtID) as value from archivedtexts where AtLgID=' . $record['LgID']);
 	$wordcount = get_first_value('select count(WoID) as value from words where WoLgID=' . $record['LgID']);
@@ -328,7 +326,7 @@ while ($record = mysql_fetch_assoc($res)) {
 	echo '<' . $tdth . ' class="' . $tdth . '1 center">' . ($wordcount > 0 ? '<a href="edit_words.php?page=1&amp;query=&amp;text=&amp;status=&amp;filterlang=' . $record['LgID'] . '&amp;status=&amp;tag12=0&amp;tag2=&amp;tag1=">' . $wordcount . '</a>' : '0' ) . '</' . $tdth . '>';
 	echo '</tr>';
 }
-mysql_free_result($res);
+unset($res);
 
 ?>
 

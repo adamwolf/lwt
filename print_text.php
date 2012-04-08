@@ -85,21 +85,19 @@ if($annplcmnt == '') $annplcmnt = getSetting('currentprintannotationplacement');
 if($annplcmnt == '') $annplcmnt = 0;
 
 $sql = 'select TxLgID, TxTitle from texts where TxID = ' . $textid;
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-$record = mysql_fetch_assoc($res);
+$record = $thedb->exec_query_onlyfirst($sql);
+if ($record === FALSE) die("Text not found");
 $title = $record['TxTitle'];
 $langid = $record['TxLgID'];
-mysql_free_result($res);
+unset($record);
 
 $sql = 'select LgTextSize, LgRemoveSpaces, LgRightToLeft from languages where LgID = ' . $langid;
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
-$record = mysql_fetch_assoc($res);
+$record = $thedb->exec_query_onlyfirst($sql);
+if ($record === FALSE) die("Language not found");
 $textsize = $record['LgTextSize'];
 $removeSpaces = $record['LgRemoveSpaces'];
 $rtlScript = $record['LgRightToLeft'];
-mysql_free_result($res);
+unset($record);
 
 saveSetting('currenttext',$textid);
 saveSetting('currentprintannotation',$ann);
@@ -144,10 +142,9 @@ $saverom = '';
 $savetags = '';
 $until = 0;
 
-$res = mysql_query($sql);		
-if ($res == FALSE) die("Invalid Query: $sql");
+$res = $thedb->exec_query($sql);
 
-while ($record = mysql_fetch_assoc($res)) {
+foreach ($res as $record) {
 
 	$actcode = $record['Code'] + 0;
 	$order = $record['TiOrder'] + 0;
@@ -184,7 +181,9 @@ while ($record = mysql_fetch_assoc($res)) {
 			$record['WoRomanization'] : "");
 	}
 } // while
-mysql_free_result($res);
+
+unset($res);
+
 output_text($saveterm,$saverom,$savetrans,$savetags,
 	$show_rom,$show_trans,$show_tags,$annplcmnt);
 echo "</p></div>";
