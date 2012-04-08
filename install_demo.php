@@ -56,7 +56,7 @@ if (isset($_REQUEST['install'])) {
 						//echo tohtml($sql_line) . "<br />"; $res=TRUE;
 						$res = $thedb->exec_sql_simple($sql_line);
 						$lines++;
-						if ($res == FALSE) $errors++;
+						if ($res == 1) $errors++;
 						else {
 							$ok++;
 							if (substr($sql_line,0,11) == "INSERT INTO") $inserts++;

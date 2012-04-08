@@ -172,7 +172,7 @@ class DB {
 	public function exec_sql_simple($sql) {
 		
 		try {
-			$this->dbh->exec($params);
+			$this->dbh->exec($sql);
 			return 0;   
 		}
 		catch(PDOException $e) {
