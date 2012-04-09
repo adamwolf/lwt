@@ -12,26 +12,30 @@ Developed by J. Pierre in 2012
 
 /**************************************************************
 PHP Database Class
-Database access via PDO, only mySQL and SQLite are supported
+Database access via PDO, only mySQL is fully supported
 mySQL:
-$db = new DB("dbname","dbserver[:port]","dbuserid","dbpassword");
-SQLite:
-$db = new DB("dbfilepath");
+$db = new DB("dbname","tblsuffix",
+			 "dbserver[:port]","dbuserid","dbpassword");
+Table suffix (number or nothing) replaces {^_^} in SQL statem.
 ***************************************************************/
 
 class DB {
 
 	private $dbh;
+	private $tablesuffix;
 	private $mysql;
 	private $sqlite;
 	private $lastInsertId;
 	private $connectString;
 	private $debugging;
+	
+	const MAGIC = '{^_^}';
 
-	public function __construct($dbname, $dbserver = "", 
-		$dbuserid = "", $dbpasswd = "") {
+	public function __construct($dbname, $tblsuffix = "",
+		$dbserver = "", $dbuserid = "", $dbpasswd = "") {
 
 		$this->debugging = 0;
+		$this->tablesuffix = $tblsuffix;
 
 		try {
 			if ($dbserver != "") {
@@ -78,6 +82,12 @@ class DB {
 
 	}
 
+	public function table_suffix() {
+
+		return $this->tablesuffix;
+
+	}
+
 	public function is_sqlite() {
 
 		return $this->sqlite;
@@ -92,6 +102,7 @@ class DB {
 
 	public function exec_query($sql, $params=array()) {
 	
+		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_query: $sql");
 		
 		try {
@@ -111,6 +122,7 @@ class DB {
 
 	public function exec_query_num_array($sql, $params=array()) {
 		
+		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_query_num_array: $sql");
 
 		try {
@@ -130,6 +142,7 @@ class DB {
 
 	public function exec_query_onlyfirst($sql, $params=array()) {
 		
+		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_query_onlyfirst: $sql");
 
 		try {
@@ -149,6 +162,7 @@ class DB {
 
 	public function exec_query_value($sql, $params=array()) {
 		
+		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_query_value: $sql");
 
 		try {
@@ -172,6 +186,7 @@ class DB {
 
 	public function exec_sql($sql, $params=array(), $errdie=TRUE) {
 		
+		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_sql: $sql");
 
 		try {
@@ -190,6 +205,7 @@ class DB {
 
 	public function exec_sql_simple($sql) {
 		
+		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_sql_simple: $sql");
 
 		try {
