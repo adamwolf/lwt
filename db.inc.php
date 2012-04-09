@@ -31,7 +31,7 @@ class DB {
 	public function __construct($dbname, $dbserver = "", 
 		$dbuserid = "", $dbpasswd = "") {
 
-		$this->debugging = false;
+		$this->debugging = 0;
 
 		try {
 			if ($dbserver != "") {
