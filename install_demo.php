@@ -38,7 +38,6 @@ if (isset($_REQUEST['install'])) {
 			$inserts = 0;
 			$creates = 0;
 			$start = 1;
-			$thedb->begin_transaction();
 			while (! gzeof($handle)) {
 				$sql_line = trim(
 					str_replace("\r","",
@@ -68,12 +67,10 @@ if (isset($_REQUEST['install'])) {
 			} // while (! feof($handle))
 			gzclose ($handle);
 			if ($errors == 0) {
-				$thedb->commit_transaction();
 				optimizedb();
 				$message = "Success: Demo Database restored - " .
 				$lines . " queries - " . $ok . " successful (" . $drops . "/" . $creates . " tables dropped/created, " . $inserts . " records added), " . $errors . " failed.";
 			} else {
-				$thedb->rollback_transaction();
 				$message = "Error: Demo Database NOT restored - " .
 				$lines . " queries - " . $ok . " successful (" . $drops . "/" . $creates . " tables dropped/created, " . $inserts . " records added), " . $errors . " failed.";
 			}

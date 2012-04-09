@@ -54,9 +54,9 @@ if (isset($_REQUEST['restore'])) {
 					}
 					if(strpos($sql_line, "--") === false) {
 						//echo tohtml($sql_line) . "<br />"; $res=TRUE;
-						$res = mysql_query($sql_line);
+						$res = $thedb->exec_sql_simple($sql_line);
 						$lines++;
-						if ($res == FALSE) $errors++;
+						if ($res == 1) $errors++;
 						else {
 							$ok++;
 							if (substr($sql_line,0,11) == "INSERT INTO") $inserts++;
@@ -86,28 +86,26 @@ if (isset($_REQUEST['restore'])) {
 
 elseif (isset($_REQUEST['backup'])) {
 	$tables = array();
-	$result = mysql_query('SHOW TABLES');
-	while ($row = mysql_fetch_row($result)) 
-		$tables[] = $row[0];
+	$res = $thedb->exec_query_num_array('SHOW TABLES');
+	foreach ($res as $record) $tables[] = $record[0];
 	$fname = "lwt-backup-" . date('Y-m-d-H-i-s') . ".sql.gz";
 	$out = "-- " . $fname . "\n";
 	foreach($tables as $table) { // foreach table
-		$result = mysql_query('SELECT * FROM ' . $table);
-		$num_fields = mysql_num_fields($result);
+		$result = $thedb->exec_query_num_array('SELECT * FROM ' . $table);
 		$out .= "\nDROP TABLE IF EXISTS " . $table . ";\n";
-		$row2 = mysql_fetch_row(mysql_query('SHOW CREATE TABLE ' . $table));
-		$out .= str_replace("\n"," ",$row2[1]) . ";\n";
-		while ($row = mysql_fetch_row($result)) { // foreach record
+		$row2 = $thedb->exec_query_num_array('SHOW CREATE TABLE ' . $table);
+		$out .= str_replace("  "," ",str_replace("  "," ",str_replace("`","",str_replace("\n"," ",$row2[0][1])))) . ";\n";
+		foreach ($result as $row) { // foreach record
 			$return = 'INSERT INTO ' . $table . ' VALUES(';
-			for ($j=0; $j < $num_fields; $j++) { // foreach field
-				if (isset($row[$j])) { 
-					$return .= "'" . mysql_real_escape_string($row[$j]) . "'";
+			foreach ($row as $data) {  // foreach field
+				if (isset($data)) { 
+					$return .= $thedb->quote_string($data);
 				} else { 
 					$return .= 'NULL';
 				}
-				if ($j < ($num_fields-1)) $return .= ',';
+				$return .= ',';
 			} // foreach field
-			$out .= $return . ");\n";
+			$out .= substr($return,0,-1) . ");\n";
 		} // foreach record
 	} // foreach table
 	header('Content-type: application/x-gzip');

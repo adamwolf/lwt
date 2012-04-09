@@ -184,7 +184,7 @@ class DB {
 	public function begin_transaction() {
 		
 		try {
-			return $this->dbh->beginTransaction();
+			//return $this->dbh->beginTransaction();
 		}
 		catch(PDOException $e) {
 			die("Begin Transaction failed: " . $e->getMessage() . " [" . $sql . "]");
@@ -195,7 +195,7 @@ class DB {
 	public function commit_transaction() {
 		
 		try {
-			return $this->dbh->commit();
+			//return $this->dbh->commit();
 		}
 		catch(PDOException $e) {
 			die("Commit Transaction failed: " . $e->getMessage() . " [" . $sql . "]");
@@ -206,7 +206,7 @@ class DB {
 	public function rollback_transaction() {
 		
 		try {
-			return $this->dbh->rollBack();
+			//return $this->dbh->rollBack();
 		}
 		catch(PDOException $e) {
 			die("Rollback Transaction failed: " . $e->getMessage() . " [" . $sql . "]");

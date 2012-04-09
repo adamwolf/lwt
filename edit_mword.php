@@ -158,17 +158,15 @@ else {  // if (! isset($_REQUEST['op']))
 	} else {
 
 		$sql = 'select WoText, WoLgID from words where WoID = ' . $wid;
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid Query: $sql");
-		$record = mysql_fetch_assoc($res);
-		if ( $record ) {
+		$record = $thedb->exec_query_onlyfirst($sql);
+		if ( $record !== FALSE) {
 			$term = $record['WoText'];
 			$lang = $record['WoLgID'];
 		} else {
-			die("Error: No results");
+			die("Error: Term not found");
 		}
-		mysql_free_result($res);
-		$termlc =	mb_strtolower($term, 'UTF-8');
+		unset($record);
+		$termlc = mb_strtolower($term, 'UTF-8');
 		
 	}
 	
@@ -239,9 +237,8 @@ else {  // if (! isset($_REQUEST['op']))
 	else {
 		
 		$sql = 'select WoTranslation, WoSentence, WoRomanization, WoStatus from words where WoID = ' . $wid;
-		$res = mysql_query($sql);		
-		if ($res == FALSE) die("Invalid Query: $sql");
-		if ($record = mysql_fetch_assoc($res)) {
+		$record = $thedb->exec_query_onlyfirst($sql);
+		if ($record !== FALSE) {
 		
 			$status = $record['WoStatus'];
 			if ($status >= 98) $status = 1;
@@ -302,8 +299,10 @@ else {  // if (! isset($_REQUEST['op']))
 			</form>
 			<div id="exsent"><span class="click" onclick="do_ajax_show_sentences(<?php echo $lang; ?>, <?php echo prepare_textdata_js($termlc) . ', ' . prepare_textdata_js("document.forms['editword'].WoSentence"); ?>);"><img src="icn/sticky-notes-stack.png" title="Show Sentences" alt="Show Sentences" /> Show Sentences</span></div>	
 			<?php
+		} else {
+			die("Term not found");		
 		}
-		mysql_free_result($res);
+		unset($record);
 	}
 
 }

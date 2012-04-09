@@ -146,9 +146,8 @@ if (isset($_REQUEST['new'])) {
 elseif (isset($_REQUEST['chg'])) {
 	
 	$sql = 'select * from tags2 where T2ID = ' . $_REQUEST['chg'];
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	if ($record = mysql_fetch_assoc($res)) {
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record === FALSE) die("Tag for Update not found");
 ?>
 		<h4>Edit Tag</h4>
 		<form name="edittag" class="validate" action="<?php echo $_SERVER['PHP_SELF']; ?>#rec<?php echo $_REQUEST['chg']; ?>" method="post">
@@ -170,8 +169,7 @@ elseif (isset($_REQUEST['chg'])) {
 		</table>
 		</form>
 <?php
-	}
-	mysql_free_result($res);
+	unset($record);
 }
 
 // DISPLAY

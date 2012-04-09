@@ -102,10 +102,8 @@ else {  // if (! isset($_REQUEST['op']))
 	if ($wid == '') die("Error: Term ID missing");
 	
 	$sql = 'select WoText, WoLgID, WoTranslation, WoSentence, WoRomanization, WoStatus from words where WoID = ' . $wid;
-	$res = mysql_query($sql);		
-	if ($res == FALSE) die("Invalid Query: $sql");
-	$record = mysql_fetch_assoc($res);
-	if ( $record ) {
+	$record = $thedb->exec_query_onlyfirst($sql);
+	if ($record !== FALSE) {
 		$term = $record['WoText'];
 		$lang = $record['WoLgID'];
 		$transl = repl_tab_nl($record['WoTranslation']);
@@ -116,7 +114,7 @@ else {  // if (! isset($_REQUEST['op']))
 	} else {
 		die("Error: No results");
 	}
-	mysql_free_result($res);
+	unset($record);
 	
 	$termlc =	mb_strtolower($term, 'UTF-8');
 	$titeltext = "Edit Term: " . tohtml($term);
