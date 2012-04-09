@@ -19,6 +19,14 @@ SQLite:
 $db = new DB("dbfilepath");
 ***************************************************************/
 
+function write_sql_log($s) {
+	global $sqldebug;
+	if ($sqldebug) 
+		file_put_contents ("_sql.log", 
+		date("r") . " - " . $s . "\n", 
+		FILE_APPEND);
+}
+
 class DB {
 
 	private $dbh;
@@ -82,6 +90,8 @@ class DB {
 	}
 
 	public function exec_query($sql, $params=array()) {
+	
+		write_sql_log("exec_query: $sql");
 		
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
@@ -100,6 +110,8 @@ class DB {
 
 	public function exec_query_num_array($sql, $params=array()) {
 		
+		write_sql_log("exec_query_num_array: $sql");
+
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 			$stmt->setFetchMode(PDO::FETCH_NUM);
@@ -117,6 +129,8 @@ class DB {
 
 	public function exec_query_onlyfirst($sql, $params=array()) {
 		
+		write_sql_log("exec_query_onlyfirst: $sql");
+
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 			$stmt->setFetchMode(PDO::FETCH_ASSOC);
@@ -134,6 +148,8 @@ class DB {
 
 	public function exec_query_value($sql, $params=array()) {
 		
+		write_sql_log("exec_query_value: $sql");
+
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 			$stmt->setFetchMode(PDO::FETCH_ASSOC);
@@ -155,6 +171,8 @@ class DB {
 
 	public function exec_sql($sql, $params=array(), $errdie=TRUE) {
 		
+		write_sql_log("exec_sql: $sql");
+
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 			$stmt->execute($params);
@@ -171,6 +189,8 @@ class DB {
 
 	public function exec_sql_simple($sql) {
 		
+		write_sql_log("exec_sql_simple: $sql");
+
 		try {
 			$this->dbh->exec($sql);
 			return 0;   

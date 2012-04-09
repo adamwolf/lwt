@@ -21,6 +21,9 @@ include "connect.inc.php";
 include "settings.inc.php";
 include "utilities.inc.php";
 
+// check/update db
+check_update_db();
+
 pagestart('Home',false);
 
 $currentlang = getSetting('currentlanguage');

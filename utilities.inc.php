@@ -1830,7 +1830,7 @@ function getSentence($seid, $wordlc,$mode) {
 	$se='';
 	$notfound = 1;
 	$jump=0;
-	$res2 = $thedb->exec_query($sql);
+	$res2 = $thedb->exec_query($sql2);
 	foreach ($res2 as $record2) {
 		if ($record2['TiIsNotWord'] == 1) {
 			$jump--;
@@ -2565,9 +2565,6 @@ if ($dspltime) get_execution_time();
 require_once("db.inc.php");
 
 $thedb = new DB ($dbname, $server, $userid, $passwd);
-
-// check/update db
-check_update_db();
 
 // -------------------------------------------------------------
 

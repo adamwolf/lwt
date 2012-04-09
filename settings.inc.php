@@ -17,6 +17,7 @@ Start a PHP session
 ***************************************************************/
 
 $debug = 0;  // 1 = debugging on, 0 = .. off
+$sqldebug = 0;  // 1 = write SQL to log file, 0 = .. off
 $dspltime = 1;  // 1 = display time on, 0 = .. off
 
 if ($debug) {
