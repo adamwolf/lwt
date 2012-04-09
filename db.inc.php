@@ -19,14 +19,6 @@ SQLite:
 $db = new DB("dbfilepath");
 ***************************************************************/
 
-function write_sql_log($s) {
-	global $sqldebug;
-	if ($sqldebug) 
-		file_put_contents ("_sql.log", 
-		date("r") . " - " . $s . "\n", 
-		FILE_APPEND);
-}
-
 class DB {
 
 	private $dbh;
@@ -34,9 +26,12 @@ class DB {
 	private $sqlite;
 	private $lastInsertId;
 	private $connectString;
+	private $debugging;
 
 	public function __construct($dbname, $dbserver = "", 
 		$dbuserid = "", $dbpasswd = "") {
+
+		$this->debugging = false;
 
 		try {
 			if ($dbserver != "") {
@@ -71,6 +66,12 @@ class DB {
 
 	}
 	
+	public function set_debugging($d) {
+
+		$this->debugging = $d;
+
+	}
+
 	public function connect_string() {
 
 		return $this->connectString;
@@ -91,7 +92,7 @@ class DB {
 
 	public function exec_query($sql, $params=array()) {
 	
-		write_sql_log("exec_query: $sql");
+		if ($this->debugging) self::write_sql_log("exec_query: $sql");
 		
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
@@ -110,7 +111,7 @@ class DB {
 
 	public function exec_query_num_array($sql, $params=array()) {
 		
-		write_sql_log("exec_query_num_array: $sql");
+		if ($this->debugging) self::write_sql_log("exec_query_num_array: $sql");
 
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
@@ -129,7 +130,7 @@ class DB {
 
 	public function exec_query_onlyfirst($sql, $params=array()) {
 		
-		write_sql_log("exec_query_onlyfirst: $sql");
+		if ($this->debugging) self::write_sql_log("exec_query_onlyfirst: $sql");
 
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
@@ -148,7 +149,7 @@ class DB {
 
 	public function exec_query_value($sql, $params=array()) {
 		
-		write_sql_log("exec_query_value: $sql");
+		if ($this->debugging) self::write_sql_log("exec_query_value: $sql");
 
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
@@ -171,7 +172,7 @@ class DB {
 
 	public function exec_sql($sql, $params=array(), $errdie=TRUE) {
 		
-		write_sql_log("exec_sql: $sql");
+		if ($this->debugging) self::write_sql_log("exec_sql: $sql");
 
 		try {
 			$stmt = $this->dbh->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
@@ -189,7 +190,7 @@ class DB {
 
 	public function exec_sql_simple($sql) {
 		
-		write_sql_log("exec_sql_simple: $sql");
+		if ($this->debugging) self::write_sql_log("exec_sql_simple: $sql");
 
 		try {
 			$this->dbh->exec($sql);
@@ -203,8 +204,10 @@ class DB {
 
 	public function begin_transaction() {
 		
+		if ($this->debugging) self::write_sql_log("begin_transaction");
+
 		try {
-			//return $this->dbh->beginTransaction();
+			return $this->dbh->beginTransaction();
 		}
 		catch(PDOException $e) {
 			die("Begin Transaction failed: " . $e->getMessage() . " [" . $sql . "]");
@@ -214,8 +217,10 @@ class DB {
 
 	public function commit_transaction() {
 		
+		if ($this->debugging) self::write_sql_log("commit_transaction");
+
 		try {
-			//return $this->dbh->commit();
+			return $this->dbh->commit();
 		}
 		catch(PDOException $e) {
 			die("Commit Transaction failed: " . $e->getMessage() . " [" . $sql . "]");
@@ -225,8 +230,10 @@ class DB {
 
 	public function rollback_transaction() {
 		
+		if ($this->debugging) self::write_sql_log("rollback_transaction");
+
 		try {
-			//return $this->dbh->rollBack();
+			return $this->dbh->rollBack();
 		}
 		catch(PDOException $e) {
 			die("Rollback Transaction failed: " . $e->getMessage() . " [" . $sql . "]");
@@ -244,6 +251,12 @@ class DB {
 		
 		return $this->lastInsertId;
 		
+	}
+
+	private static function write_sql_log($s) {
+		file_put_contents ("_sql.log", 
+			date("r") . " - " . $s . "\n", 
+			FILE_APPEND);
 	}
 
 }

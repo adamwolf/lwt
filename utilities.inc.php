@@ -2563,8 +2563,8 @@ if ($dspltime) get_execution_time();
 // DB Connection
 
 require_once("db.inc.php");
-
 $thedb = new DB ($dbname, $server, $userid, $passwd);
+$thedb->set_debugging($sqldebug);
 
 // -------------------------------------------------------------
 
