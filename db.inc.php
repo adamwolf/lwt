@@ -14,15 +14,16 @@ Developed by J. Pierre in 2012
 PHP Database Class
 Database access via PDO, only mySQL is fully supported
 mySQL:
-$db = new DB("dbname","tblsuffix",
-			 "dbserver[:port]","dbuserid","dbpassword");
-Table suffix (number or nothing) replaces {^_^} in SQL statem.
+$db = new DB("dbname","tblprefix",
+			"dbserver[:port]","dbuserid","dbpassword");
+Table prefix replaces {^_^} in SQL statements:
+e.g. SELECT .... FROM {^_^}tablename WHERE .... ORDER BY ...
 ***************************************************************/
 
 class DB {
 
 	private $dbh;
-	private $tablesuffix;
+	private $tableprefix;
 	private $mysql;
 	private $sqlite;
 	private $lastInsertId;
@@ -31,11 +32,11 @@ class DB {
 	
 	const MAGIC = '{^_^}';
 
-	public function __construct($dbname, $tblsuffix = "",
+	public function __construct($dbname, $tblprefix = "",
 		$dbserver = "", $dbuserid = "", $dbpasswd = "") {
 
 		$this->debugging = 0;
-		$this->tablesuffix = $tblsuffix;
+		$this->tableprefix = $tblprefix;
 
 		try {
 			if ($dbserver != "") {
@@ -84,7 +85,7 @@ class DB {
 
 	public function table_suffix() {
 
-		return $this->tablesuffix;
+		return $this->tableprefix;
 
 	}
 
@@ -102,7 +103,7 @@ class DB {
 
 	public function exec_query($sql, $params=array()) {
 	
-		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
+		$sql = str_replace(self::MAGIC, $this->tableprefix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_query: $sql");
 		
 		try {
@@ -122,7 +123,7 @@ class DB {
 
 	public function exec_query_num_array($sql, $params=array()) {
 		
-		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
+		$sql = str_replace(self::MAGIC, $this->tableprefix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_query_num_array: $sql");
 
 		try {
@@ -142,7 +143,7 @@ class DB {
 
 	public function exec_query_onlyfirst($sql, $params=array()) {
 		
-		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
+		$sql = str_replace(self::MAGIC, $this->tableprefix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_query_onlyfirst: $sql");
 
 		try {
@@ -162,7 +163,7 @@ class DB {
 
 	public function exec_query_value($sql, $params=array()) {
 		
-		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
+		$sql = str_replace(self::MAGIC, $this->tableprefix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_query_value: $sql");
 
 		try {
@@ -186,7 +187,7 @@ class DB {
 
 	public function exec_sql($sql, $params=array(), $errdie=TRUE) {
 		
-		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
+		$sql = str_replace(self::MAGIC, $this->tableprefix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_sql: $sql");
 
 		try {
@@ -205,7 +206,7 @@ class DB {
 
 	public function exec_sql_simple($sql) {
 		
-		$sql = str_replace(self::MAGIC, $this->tablesuffix, $sql);	
+		$sql = str_replace(self::MAGIC, $this->tableprefix, $sql);	
 		if ($this->debugging) self::write_sql_log("exec_sql_simple: $sql");
 
 		try {

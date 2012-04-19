@@ -688,7 +688,7 @@ function optimizedb() {
 	adjust_autoincr('words','WoID');
 	adjust_autoincr('tags','TgID');
 	adjust_autoincr('tags2','T2ID');
-	$dummy = runsql('OPTIMIZE TABLE archivedtexts,languages,sentences,textitems,texts,words,settings,tags,wordtags,tags2,texttags,archtexttags', '');
+	$dummy = runsql('OPTIMIZE TABLE {^_^}archivedtexts, {^_^}languages, {^_^}sentences, {^_^}textitems, {^_^}texts, {^_^}words, {^_^}settings, {^_^}tags, {^_^}wordtags, {^_^}tags2, {^_^}texttags, {^_^}archtexttags', '');
 }
 
 // -------------------------------------------------------------
@@ -703,9 +703,9 @@ function limitlength($s, $l) {
 function adjust_autoincr($table,$key) {
 	global $thedb;
 	if ($thedb->is_mysql()) {
-		$val = $thedb->exec_query_value('select max(' . $key .')+1 as value from ' . $table);
+		$val = $thedb->exec_query_value('select max(' . $key .')+1 as value from {^_^}' . $table);
 		if (! isset($val)) $val = 1;
-		$sql = 'alter table ' . $table . ' AUTO_INCREMENT = ' . $val;
+		$sql = 'alter table {^_^}' . $table . ' AUTO_INCREMENT = ' . $val;
 		$thedb->exec_sql($sql);
 	}
 }
