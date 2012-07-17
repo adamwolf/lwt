@@ -20,7 +20,7 @@ include "settings.inc.php";
 include "utilities.inc.php";
 
 $textid = getreq('text');
-$sql = 'select TxLgID, TxTitle, TxAudioURI from texts where TxID = ' . $textid;
+$sql = 'select TxLgID, TxTitle, TxAudioURI, TxLinkURI from texts where TxID = ' . $textid;
 $res = mysql_query($sql);		
 if ($res == FALSE) die("Invalid Query: $sql");
 $record = mysql_fetch_assoc($res);
@@ -31,6 +31,9 @@ $audio=trim($audio);
 
 $title = $record['TxTitle'];
 $langid = $record['TxLgID'];
+$link = $record['TxLinkURI'];
+if(!isset($link)) $link='';
+$link=trim($link);
 mysql_free_result($res); 
 
 saveSetting('currenttext',$textid);
@@ -50,7 +53,13 @@ $showAll = ($showAll == '' ? 1 : (((int) $showAll != 0) ? 1 : 0));
 ?>
 <table class="width99pc"><tr><td class="center" colspan="7" style="padding:10px;" nowrap="nowrap">TO DO: <span id="learnstatus"><?php echo texttodocount2($_REQUEST['text']); ?></span>&nbsp;&nbsp;&nbsp;&nbsp;<span title="[Show All] = ON: ALL terms are shown, and all multi-word terms are shown as superscripts before the first word. The superscript indicates the number of words in the multi-word term. 
 [Show All] = OFF: Multi-word terms now hide single words and shorter or overlapping multi-word terms.">Show All&nbsp;<input type="checkbox" id="showallwords" <?php echo get_checked($showAll); ?> /></span><span id="thetextid" class="hide"><?php echo $textid; ?></span></td></tr>
+<?php
+// LINK
 
+if ($link != '') {
+echo '<a href="' . link . '" />External Link</a>';
+}
+?>
 <?php
 
 // AUDIO PLAYER

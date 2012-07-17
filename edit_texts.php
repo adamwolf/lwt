@@ -113,7 +113,7 @@ if (isset($_REQUEST['markaction'])) {
 					if ($res == FALSE) die("Invalid Query: $sql");
 					while ($record = mysql_fetch_assoc($res)) {
 						$id = $record['TxID'];
-						$count += (0 + runsql('insert into archivedtexts (AtLgID, AtTitle, AtText, AtAudioURI) select TxLgID, TxTitle, TxText, TxAudioURI from texts where TxID = ' . $id, ""));
+						$count += (0 + runsql('insert into archivedtexts (AtLgID, AtTitle, AtText, AtAudioURI, ATLinkURI) select TxLgID, TxTitle, TxText, TxAudioURI, TxLinkURI from texts where TxID = ' . $id, ""));
 						$aid = get_last_key();
 						runsql('insert into archtexttags (AgAtID, AgT2ID) select ' . $aid . ', TtT2ID from texttags where TtTxID = ' . $id, "");	
 					}
@@ -204,7 +204,7 @@ elseif (isset($_REQUEST['arch'])) {
 		"Text items deleted");
 	$message2 = runsql('delete from sentences where SeTxID = ' . $_REQUEST['arch'], 
 		"Sentences deleted");
-	$message4 = runsql('insert into archivedtexts (AtLgID, AtTitle, AtText, AtAudioURI) select TxLgID, TxTitle, TxText, TxAudioURI from texts where TxID = ' . $_REQUEST['arch'], "Archived Texts saved");
+	$message4 = runsql('insert into archivedtexts (AtLgID, AtTitle, AtText, AtAudioURI, AtLinkURI) select TxLgID, TxTitle, TxText, TxAudioURI, TxLinkURI from texts where TxID = ' . $_REQUEST['arch'], "Archived Texts saved");
 	$id = get_last_key();
 	runsql('insert into archtexttags (AgAtID, AgT2ID) select ' . $id . ', TtT2ID from texttags where TtTxID = ' . $_REQUEST['arch'], "");	
 	$message1 = runsql('delete from texts where TxID = ' . $_REQUEST['arch'], "Texts deleted");
@@ -239,11 +239,12 @@ elseif (isset($_REQUEST['op'])) {
 		// INSERT
 		
 		elseif (substr($_REQUEST['op'],0,4) == 'Save') {
-			$message1 = runsql('insert into texts (TxLgID, TxTitle, TxText, TxAudioURI) values( ' . 
+			$message1 = runsql('insert into texts (TxLgID, TxTitle, TxText, TxAudioURI, TxLinkURI) values( ' . 
 			$_REQUEST["TxLgID"] . ', ' . 
 			convert_string_to_sqlsyntax($_REQUEST["TxTitle"]) . ', ' . 
 			convert_string_to_sqlsyntax($_REQUEST["TxText"]) . ', ' .
-			convert_string_to_sqlsyntax($_REQUEST["TxAudioURI"]) . ' ' .
+			convert_string_to_sqlsyntax($_REQUEST["TxAudioURI"]) . ', ' .
+			convert_string_to_sqlsyntax($_REQUEST["TxLinkURI"]) . ' ' .
 			')', "Saved");
 			$id = get_last_key();
 			saveTextTags($id);
@@ -257,6 +258,7 @@ elseif (isset($_REQUEST['op'])) {
 			'TxTitle = ' . convert_string_to_sqlsyntax($_REQUEST["TxTitle"]) . ', ' .
 			'TxText = ' . convert_string_to_sqlsyntax($_REQUEST["TxText"]) . ', ' .
 			'TxAudioURI = ' . convert_string_to_sqlsyntax($_REQUEST["TxAudioURI"]) . ' ' .
+			'TxLinkURI = ' . convert_string_to_sqlsyntax($_REQUEST["TxLinkURI"]) . ' ' .
 			'where TxID = ' . $_REQUEST["TxID"], "Updated");
 			$id = $_REQUEST["TxID"];
 			saveTextTags($id);
@@ -321,6 +323,11 @@ if (isset($_REQUEST['new'])) {
 	</td>
 	</tr>
 	<tr>
+	<td class="td1 right">Link-URI:</td>
+	<td class="td1"><input type="text" name="TxLinkURI" value="" maxlength="200" size="60" />
+	</td>
+	</tr>
+	<tr>
 	<td class="td1 right">Audio-URI:</td>
 	<td class="td1"><input type="text" name="TxAudioURI" value="" maxlength="200" size="60" />		
 	<span id="mediaselect"><?php echo selectmediapath('TxAudioURI'); ?></span>		
@@ -345,7 +352,7 @@ if (isset($_REQUEST['new'])) {
 
 elseif (isset($_REQUEST['chg'])) {
 	
-	$sql = 'select TxLgID, TxTitle, TxText, TxAudioURI from texts where TxID = ' . $_REQUEST['chg'];
+	$sql = 'select TxLgID, TxTitle, TxText, TxAudioURI, TxLinkURI from texts where TxID = ' . $_REQUEST['chg'];
 	$res = mysql_query($sql);		
 	if ($res == FALSE) die("Invalid Query: $sql");
 	if ($record = mysql_fetch_assoc($res)) {
@@ -380,6 +387,11 @@ elseif (isset($_REQUEST['chg'])) {
 		<td class="td1 right">Tags:</td>
 		<td class="td1">
 		<?php echo getTextTags($_REQUEST['chg']); ?>
+		</td>
+		</tr>
+		<tr>
+		<td class="td1 right">Link-URI:</td>
+		<td class="td1"><input type="text" name="TxLinkURI" value="<?php echo tohtml($record['TxLinkURI']); ?>" maxlength="200" size="60" /> 
 		</td>
 		</tr>
 		<tr>
@@ -514,7 +526,7 @@ Marked Texts:&nbsp;
 
 <?php
 
-$sql = 'select TxID, TxTitle, LgName, TxAudioURI, ifnull(concat(\'[\',group_concat(distinct T2Text order by T2Text separator \', \'),\']\'),\'\') as taglist from ((texts left JOIN texttags ON TxID = TtTxID) left join tags2 on T2ID = TtT2ID), languages where LgID=TxLgID ' . $wh_lang . $wh_query . ' group by TxID ' . $wh_tag . ' order by ' . $sorts[$currentsort-1] . ' ' . $limit;
+$sql = 'select TxID, TxTitle, LgName, TxAudioURI, TxLinkURI, ifnull(concat(\'[\',group_concat(distinct T2Text order by T2Text separator \', \'),\']\'),\'\') as taglist from ((texts left JOIN texttags ON TxID = TtTxID) left join tags2 on T2ID = TtT2ID), languages where LgID=TxLgID ' . $wh_lang . $wh_query . ' group by TxID ' . $wh_tag . ' order by ' . $sorts[$currentsort-1] . ' ' . $limit;
 if ($debug) echo $sql;
 $res = mysql_query($sql);		
 if ($res == FALSE) die("Invalid Query: $sql");
